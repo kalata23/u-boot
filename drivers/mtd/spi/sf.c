@@ -6,6 +6,7 @@
  * Copyright (C) 2010 Reinhard Meyer, EMK Elektronik
  */
 
+#define DEBUG
 #include <common.h>
 #include <spi.h>
 

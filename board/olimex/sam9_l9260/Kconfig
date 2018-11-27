@@ -1,0 +1,14 @@
+if TARGET_OLIMEX_SAM9_L9260
+
+config SYS_BOARD
+	default "sam9_l9260"
+
+config SYS_VENDOR
+	default "olimex"
+
+config SYS_CONFIG_NAME
+	default "sam9_l9260"
+
+config SPL_SPI_SAM9_L9260
+	bool "Support loading u-boot from DataFlash in SPL"
+endif

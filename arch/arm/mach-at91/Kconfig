@@ -237,6 +237,15 @@ config TARGET_SMARTWEB
 	select SUPPORT_SPL
 	imply CMD_DM
 
+config TARGET_OLIMEX_SAM9_L9260
+	bool "Support SAM9-L9260"
+	select AT91SAM9260
+	select DM
+	select DM_ETH
+	select DM_GPIO
+	select DM_SERIAL
+	imply CMD_DM
+
 config TARGET_VINCO
 	bool "Support VINCO"
 	select DM
@@ -285,6 +294,7 @@ source "board/egnite/ethernut5/Kconfig"
 source "board/esd/meesc/Kconfig"
 source "board/l+g/vinco/Kconfig"
 source "board/mini-box/picosam9g45/Kconfig"
+source "board/olimex/sam9_l9260/Kconfig"
 source "board/ronetix/pm9261/Kconfig"
 source "board/ronetix/pm9263/Kconfig"
 source "board/ronetix/pm9g45/Kconfig"
