@@ -75,7 +75,12 @@ int spi_flash_probe_bus_cs(unsigned int busnum, unsigned int cs,
 	str = strdup(name);
 #endif
 	ret = spi_get_bus_and_cs(busnum, cs, max_hz, spi_mode,
-				  "spi_flash_std", str, &bus, &slave);
+#ifdef CONFIG_SPI_FLASH_DATAFLASH
+				  "spi_dataflash",
+#else
+				  "spi_flash_std",
+#endif
+				  str, &bus, &slave);
 	if (ret)
 		return ret;
 
