@@ -105,7 +105,7 @@ static int get_path_offset(void *blob, enum devices dev, char *dpath)
 	return offset;
 
 success:
-	if (path != NULL)
+	if (dpath != NULL)
 		strcpy(dpath, path);
 	return offset;
 }
