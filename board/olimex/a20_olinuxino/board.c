@@ -32,6 +32,9 @@
 #include <asm/io.h>
 #include <linux/ctype.h>
 
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
+
 #include "../common/board_detect.h"
 #include "../common/boards.h"
 
@@ -169,24 +172,8 @@ enum env_location env_get_location(enum env_operation op, int prio)
 }
 #endif
 
-#if defined(CONFIG_ENV_IS_IN_FAT)
-char *get_fat_device_and_part(void)
-{
-	uint32_t boot = sunxi_get_boot_device();
-
-	switch (boot) {
-		case BOOT_DEVICE_MMC1:
-			return "0:auto";
-		case BOOT_DEVICE_MMC2:
-			return "1:auto";
-		default:
-			return CONFIG_ENV_FAT_DEVICE_AND_PART;
-	}
-}
-#endif
-
 #if defined(CONFIG_ENV_IS_IN_EXT4)
-char *get_ext4_device_and_part(void)
+char *get_fat_device_and_part(void)
 {
 	uint32_t boot = sunxi_get_boot_device();
 
@@ -205,6 +192,7 @@ char *get_ext4_device_and_part(void)
 int board_init(void)
 {
 	__maybe_unused int id_pfr1, ret, satapwr_pin, macpwr_pin, btpwr_pin;
+	__maybe_unused struct udevice *dev;
 
 	gd->bd->bi_boot_params = (PHYS_SDRAM_0 + 0x100);
 
@@ -264,6 +252,26 @@ int board_init(void)
 			mdelay(100);
 			gpio_direction_output(btpwr_pin, 1);
 		}
+
+#ifdef CONFIG_DM_SPI_FLASH
+		if (eeprom->config.storage == 's' ||
+		    eeprom->id == 8958 ||
+		    eeprom->id == 9604 ||
+		    eeprom->id == 9613) {
+
+			ret = uclass_first_device(UCLASS_SPI_FLASH, &dev);
+			if (ret) {
+				printf("Failed to find SPI flash device\n");
+				return 0;
+			}
+
+			ret = device_probe(dev);
+			if (ret) {
+				printf("Failed to probe SPI flash device\n");
+				return 0;
+			}
+		}
+#endif
 	}
 
 	return 0;
@@ -530,6 +538,7 @@ static void parse_spl_header(const uint32_t spl_addr)
 	}
 	/* otherwise assume .scr format (mkimage-type script) */
 	env_set_hex("fel_scriptaddr", spl->fel_script_address);
+
 }
 /*
  * Note this function gets called multiple times.
@@ -639,6 +648,7 @@ static void setup_environment(const void *fdt)
 
 int misc_init_r(void)
 {
+	__maybe_unused struct udevice *dev;
 	__maybe_unused int ret;
 	uint boot;
 
@@ -660,19 +670,20 @@ int misc_init_r(void)
 		env_set("spi_booted", "1");
 	}
 
+	/* Setup environment */
 	setup_environment(gd->fdt_blob);
 
-#ifdef CONFIG_USB_ETHER
-	usb_ether_init();
-#endif
+#ifdef CONFIG_USB_GADGET
+	ret = uclass_first_device(UCLASS_USB_DEV_GENERIC, &dev);
+	if (!dev || ret) {
+		printf("No USB device found\n");
+		return 0;
+	}
 
-#ifdef CONFIG_DM_SPI_FLASH
-	if (olimex_eeprom_is_valid()) {
-		if (eeprom->config.storage == 's' ||
-		    eeprom->id == 8958 ||
-		    eeprom->id == 9604 ||
-		    eeprom->id == 9613)
-			run_command("sf probe", 0);
+	ret = device_probe(dev);
+	if (ret) {
+		printf("Failed to probe USB device\n");
+		return 0;
 	}
 #endif
 	return 0;
@@ -787,9 +798,7 @@ void set_dfu_alt_info(char *interface, char *devstr)
 	if (!strcmp(interface, "sf"))
 		p = env_get("dfu_alt_info_sf");
 #endif
-
-	if (p != NULL)
-		env_set("dfu_alt_info", p);
+	env_set("dfu_alt_info", p);
 }
 
 #endif /* CONFIG_SET_DFU_ALT_INFO */
