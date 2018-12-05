@@ -402,11 +402,15 @@ static int musb_usb_probe(struct udevice *dev)
 {
 	struct sunxi_glue *glue = dev_get_priv(dev);
 	struct musb_host_data *host = &glue->mdata;
-	struct usb_bus_priv *priv = dev_get_uclass_priv(dev);
 	struct musb_hdrc_platform_data pdata;
 	void *base = dev_read_addr_ptr(dev);
 	struct phy phy;
 	int ret;
+
+#ifdef CONFIG_USB_MUSB_HOST
+	struct usb_bus_priv *priv = dev_get_uclass_priv(dev);
+	priv->desc_before_addr = true;
+#endif
 
 	if (!base)
 		return -EINVAL;
@@ -426,7 +430,6 @@ static int musb_usb_probe(struct udevice *dev)
 	}
 
 	glue->phy = &phy;
-	priv->desc_before_addr = true;
 
 	memset(&pdata, 0, sizeof(pdata));
 	pdata.power = 250;
