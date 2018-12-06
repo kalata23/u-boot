@@ -41,6 +41,40 @@ static void sam9_l9260_request_gpio(void)
 {
 	gpio_request(CONFIG_GREEN_LED, "stat");
 	gpio_request(CONFIG_YELLOW_LED, "pwr");
+
+	gpio_request(CONFIG_SYS_NAND_ENABLE_PIN, "nand ena");
+	gpio_request(CONFIG_SYS_NAND_READY_PIN, "nand rdy");
+}
+
+static void sam9_l9260_nand_hw_init(void)
+{
+	struct at91_smc *smc = (struct at91_smc *)ATMEL_BASE_SMC;
+	struct at91_matrix *matrix = (struct at91_matrix *)ATMEL_BASE_MATRIX;
+	unsigned long csa;
+
+	/* Assign CS3 to NAND/SmartMedia Interface */
+	csa = readl(&matrix->ebicsa);
+	csa |= AT91_MATRIX_CS3A_SMC_SMARTMEDIA;
+	writel(csa, &matrix->ebicsa);
+
+	/* Configure SMC CS3 for NAND/SmartMedia */
+	writel(AT91_SMC_SETUP_NWE(1) | AT91_SMC_SETUP_NCS_WR(0) |
+		AT91_SMC_SETUP_NRD(1) | AT91_SMC_SETUP_NCS_RD(0),
+		&smc->cs[3].setup);
+	writel(AT91_SMC_PULSE_NWE(3) | AT91_SMC_PULSE_NCS_WR(3) |
+		AT91_SMC_PULSE_NRD(3) | AT91_SMC_PULSE_NCS_RD(3),
+		&smc->cs[3].pulse);
+	writel(AT91_SMC_CYCLE_NWE(5) | AT91_SMC_CYCLE_NRD(5),
+	       &smc->cs[3].cycle);
+	writel(AT91_SMC_MODE_RM_NRD | AT91_SMC_MODE_WM_NWE |
+		AT91_SMC_MODE_TDF_CYCLE(2),
+		&smc->cs[3].mode);
+
+	/* Configure RDY/BSY */
+	at91_set_gpio_input(CONFIG_SYS_NAND_READY_PIN, 1);
+
+	/* Enable NandFlash */
+	at91_set_gpio_output(CONFIG_SYS_NAND_ENABLE_PIN, 1);
 }
 
 static void sam9_l9260_macb_hw_init(void)
@@ -146,7 +180,7 @@ int board_init(void)
 	at91_udc_probe(&board_udc_data);
 #endif
 
-	// sam9_l9260_nand_hw_init();
+	sam9_l9260_nand_hw_init();
 	sam9_l9260_macb_hw_init();
 	return 0;
 }
