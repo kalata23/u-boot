@@ -1181,10 +1181,9 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
-	if (olimex_board_is_micro() &&
-	    ((lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-10", strlen(lcd->info.name))) ||
+	if ((lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-10", strlen(lcd->info.name))) ||
 	    (!lcd && lcd_olinuxino_eeprom.id == 9278) ||
-	    (!lcd && lcd_olinuxino_eeprom.id == 9284))) {
+	    (!lcd && lcd_olinuxino_eeprom.id == 9284)) {
 		ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
 		if (ret)
 			return ret;
