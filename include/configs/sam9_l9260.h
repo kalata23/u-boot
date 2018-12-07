@@ -126,7 +126,6 @@
 #define DFU_MANIFEST_POLL_TIMEOUT	25000
 
 /* General Boot Parameter */
-#define CONFIG_BOOTCOMMAND		"run flashboot"
 #define CONFIG_SYS_CBSIZE		512
 
 /*
@@ -150,14 +149,37 @@
 #define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PC14
 #define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PC13
 
-/*
- * Predefined environment variables.
- * Usefull to define some easy to use boot commands.
- */
-#define	CONFIG_EXTRA_ENV_SETTINGS					\
-									\
-	"basicargs=console=ttyS0,115200\0"				\
-									\
+#if 0
+#define MEM_LAYOUT_ENV_SETTINGS \
+	"scriptaddr=0x21000000\0" \
+	"fdt_addr_r=0x21100000\0" \
+	"pxefile_addr_r=0x21120000\0" \
+	"kernel_addr_r=0x22000000\0" \
+	"ramdisk_addr_r=0x23000000\0"
+
+/* Basic environment settings */
+#define BOOT_TARGET_DEVICES(func) \
+	func(DHCP, dhcp, na)
+
+#include <config_distro_bootcmd.h>
+#endif
+
+#if 0
+#define CONFIG_BOOTCOMMAND	"setenv serverip 192.168.0.20; " \
+				"setenv bootargs console=ttyS0,115200 loglevel=8; " \
+				"dhcp 0x22000000 SAM9-L9260/zImage; " \
+				"tftp 0x23000000 SAM9-L9260/rootfs.cpio.uboot; " \
+				"tftp 0x21800000 SAM9-L9260/at91sam9260ek.dtb; " \
+				"bootz 0x22000000 0x23000000 0x21800000\0"
+#endif
+
+#define	CONFIG_EXTRA_ENV_SETTINGS \
+	"update_uboot=" \
+		"setenv serverip 192.168.0.20; " \
+		"dhcp 0x22000000 SAM9-L9260/u-boot.bin; " \
+		"sf probe; " \
+		"sf erase 0x8400 0x84000; " \
+		"sf write 0x22000000 0x8400 0x84000\0" \
 	"mtdparts="CONFIG_MTDPARTS_DEFAULT"\0"
 
 /*
