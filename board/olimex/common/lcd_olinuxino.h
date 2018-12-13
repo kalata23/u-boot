@@ -42,6 +42,8 @@ struct lcd_olinuxino_info {
 } __attribute__((__packed__));
 
 struct lcd_olinuxino_board {
+	uint32_t id;
+	char compatible[32];
 	struct lcd_olinuxino_info info;
 	struct lcd_olinuxino_mode mode;
 };

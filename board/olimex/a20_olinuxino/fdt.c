@@ -794,7 +794,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "vsync-len", lcd->mode.vpw);
 	ret |= fdt_setprop_u32(blob, offset, "vfront-porch", lcd->mode.vfp);
 	ret |= fdt_setprop_u32(blob, offset, "vback-porch", lcd->mode.vbp);
-	if (!strncmp(lcd->info.name, "LCD-OLinuXino-15.6FHD", strlen(lcd->info.name))) {
+	if (lcd->id == 7894) {
 		ret |= fdt_setprop_u32(blob, offset, "hsync-active", 1);
 		ret |= fdt_setprop_u32(blob, offset, "vsync-active", 1);
 	}
@@ -870,7 +870,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
-	if (!strncmp(lcd->info.name, "LCD-OLinuXino-15.6FHD", strlen(lcd->info.name)))
+	if (lcd->id == 7894)
 		ret |= fdt_setprop_empty(blob, offset, "allwinner,lvds-dual-link");
 	if (ret < 0)
  		return ret;
@@ -1181,12 +1181,13 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
-	if ((lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-10", strlen(lcd->info.name))) ||
-	    (!lcd && lcd_olinuxino_eeprom.id == 9278) ||
-	    (!lcd && lcd_olinuxino_eeprom.id == 9284)) {
-		ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
-		if (ret)
-			return ret;
+	if (lcd) {
+		if (lcd->id == 9284 || lcd->id == 9278 || lcd->id == 7862)
+			ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
+	} else {
+		if (lcd_olinuxino_eeprom.id == 9278 ||
+		    lcd_olinuxino_eeprom.id == 9284)
+			ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
 	}
 	if (ret < 0)
  		return ret;
@@ -1211,16 +1212,15 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	/* Enable TS */
 	if ((!lcd && (lcd_olinuxino_eeprom.id == 9278 ||	/* LCD-OLinuXino-7CTS */
 	    lcd_olinuxino_eeprom.id == 9284)) ||		/* LCD-OLinuXino-10CTS */
-	    (lcd &&
-	    (!strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name)) ||
-	    !strncmp(lcd->info.name, "LCD-OLinuXino-7CTS", strlen(lcd->info.name)) ||
-	    !strncmp(lcd->info.name, "LCD-OLinuXino-10CTS", strlen(lcd->info.name))))) {
+	    (lcd && (lcd->id == 8630 || 			/* LCD-OLinuXino-5 */
+	    lcd->id == 9278 ||					/* LCD-OLinuXino-7CTS */
+	    lcd->id == 9284))) {				/* LCD-OLinuXino-10CTS */
 
 		offset = get_path_offset(blob, PATH_I2C2, path);
 		if (offset < 0)
 			return offset;
 
-		if (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name))) {
+		if (lcd && lcd->id == 8630) {
 			offset = fdt_add_subnode(blob, offset, "ft5x@38");
 			if (offset < 0)
 				return offset;
@@ -1231,7 +1231,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 			ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
 		} else {
 			if ((!lcd && lcd_olinuxino_eeprom.id == 9278) ||
-			    (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-7CTS", strlen(lcd->info.name)))) {
+			    (lcd && lcd->id == 9278)) {
 				offset = fdt_add_subnode(blob, offset, "gt911@14");
 				if (offset < 0)
 					return offset;
@@ -1264,13 +1264,13 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 		gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 		gpios[1] = cpu_to_fdt32(gpio >> 5);
 		gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-		if (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name)))
+		if (lcd && lcd->id == 8630)
 			gpios[3] = cpu_to_fdt32(1);
 		else
 			gpios[3] = cpu_to_fdt32(0);
 		ret |= fdt_setprop(blob, offset, "reset-gpios", gpios, sizeof(gpios));
 
-		if (lcd_olinuxino_eeprom.id == 9278)
+		if (lcd_olinuxino_eeprom.id == 9278 || (lcd && lcd->id == 9278))
 			ret |= fdt_setprop_empty(blob, offset, "touchscreen-swapped-x-y");
 
 	} else {
@@ -1310,13 +1310,12 @@ int ft_system_setup(void *blob, bd_t *bd)
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	/* Check if lcd is the default monitor */
 	char *s = env_get("monitor");
+	uint32_t id;
 	if (s != NULL && !strncmp(s, "lcd", 3)) {
 
 		/* Check RGB or LVDS mode should be enabled */
-		s = env_get("lcd_olinuxino");
-		if (s != NULL &&
-		   (!strncmp(s, "LCD-OLinuXino-15.6", strlen(s)) ||
-		   (!strncmp(s, "LCD-OLinuXino-15.6FHD", strlen(s)))))
+		id = env_get_ulong("lcd_olinuxino", 10, 0);
+		if (id == 7894 || id == 7891)
 			ret = board_fix_lcd_olinuxino_lvds(blob);
 		else
 			ret = board_fix_lcd_olinuxino_rgb(blob);

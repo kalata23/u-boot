@@ -71,7 +71,7 @@ success:
 static int board_fix_lcd_olinuxino(void *blob)
 {
 	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
-	
+
 	uint32_t power_supply_phandle;
 	uint32_t backlight_phandle;
 	uint32_t pinctrl_phandle;
@@ -87,7 +87,6 @@ static int board_fix_lcd_olinuxino(void *blob)
 	int offset;
 	int ret = 0;
 	int gpio;
-	char *s = env_get("lcd_olinuxino");
 	int i;
 
 
@@ -258,7 +257,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 	if (!pins_phandle)
 		return -1;
 
-	if (!s) {
+	if (!lcd) {
 		offset = get_path_offset(blob, PATH_I2C0, path);
 	  	if (offset < 0)
 	  		return offset;
@@ -284,7 +283,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 	ret = fdt_setprop_string(blob, offset, "compatible", lcd_olinuxino_compatible());
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
-	if (!s)
+	if (!lcd)
 		ret |= fdt_setprop_u32(blob, offset, "reg", 0x50);
 	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", pins_phandle);
@@ -390,7 +389,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 	if (!tcon0_endpoint_phandle)
 		return -1;
 
-	if (!s)
+	if (!lcd)
 		strcat(path, "/panel@50/port@0/endpoint@0");
 	else
 		strcat(path, "/panel/port@0/endpoint@0");
@@ -405,13 +404,12 @@ static int board_fix_lcd_olinuxino(void *blob)
 
 
 	/**
-	 * Touchscreen should be enabled only if AUTODETECT is enabled
-	 * or if LCD-OLinuXino-5 is selected.
+	 * Enable TS for the following boards:
+	 * LCD-OLinuXino-5
+	 * LCD-OLinuXino-7CTS
+	 * LCD-OLinuXino-10CTS
 	 */
-	if (s &&
-	    strncmp(s, "LCD-OLinuXino-5", strlen(s)) &&
-	    strncmp(s, "LCD-OLinuXino-7CTS", strlen(s)) &&
-	    strncmp(s, "LCD-OLinuXino-10CTS", strlen(s)))
+	if (lcd && lcd->id != 8630 && lcd->id != 9278 && lcd->id != 9284)
 		return 0;
 
 	/* Enable TS */
@@ -424,7 +422,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 	if (ret < 0)
 		return ret;
 
-	if (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name))) {
+	if (lcd && lcd->id == 8630) {
 		offset = fdt_add_subnode(blob, offset, "ft5x@38");
 		if (offset < 0)
 			return offset;
@@ -435,7 +433,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
 	} else {
 		if ((!lcd && lcd_olinuxino_eeprom.id == 9278) ||
-		    (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-7CTS", strlen(lcd->info.name)))) {
+		    (lcd && lcd->id == 9278)) {
 			offset = fdt_add_subnode(blob, offset, "gt911@14");
 			if (offset < 0)
 				return offset;
@@ -469,13 +467,13 @@ static int board_fix_lcd_olinuxino(void *blob)
 	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 	gpios[1] = cpu_to_fdt32(gpio >> 5);
 	gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-	if (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name)))
+	if (lcd && lcd->id == 8630)
 		gpios[3] = cpu_to_fdt32(1);
 	else
 		gpios[3] = cpu_to_fdt32(0);
 	ret |= fdt_setprop(blob, offset, "reset-gpios", gpios, sizeof(gpios));
 
-	if (lcd_olinuxino_eeprom.id == 9278)
+	if ((lcd && lcd->id == 9278) || (!lcd && lcd_olinuxino_eeprom.id == 9278))
 		ret |= fdt_setprop_empty(blob, offset, "touchscreen-swapped-x-y");
 
 	return ret;

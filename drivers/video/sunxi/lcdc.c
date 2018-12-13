@@ -50,6 +50,8 @@ void lcdc_enable(struct sunxi_lcdc_reg * const lcdc, int depth)
 	if (lcd_olinuxino_interface() != LCD_OLINUXINO_IF_LVDS)
 		return;
 
+	setbits_le32(&lcdc->tcon0_lvds_intf, SUNXI_LCDC_TCON0_LVDS_INTF_ENABLE);
+	setbits_le32(&lcdc->lvds_ana0, SUNXI_LCDC_LVDS_ANA0);
 #ifdef CONFIG_SUNXI_GEN_SUN6I
 	udelay(2); /* delay at least 1200 ns */
 	setbits_le32(&lcdc->lvds_ana0, SUNXI_LCDC_LVDS_ANA0_EN_MB);
@@ -137,7 +139,7 @@ void lcdc_tcon0_mode_set(struct sunxi_lcdc_reg * const lcdc,
 		writel(0, &lcdc->tcon0_cpu_intf);
 	} else {
 		val = (depth == 18) ? 1 : 0;
-		if (!strncmp(lcd->info.name, "LCD-OLinuXino-15.6FHD", strlen(lcd->info.name)))
+		if (lcd->id == 7894)
 			ch = 1;
 		writel(SUNXI_LCDC_TCON0_LVDS_INTF_CH(ch) |
 		       SUNXI_LCDC_TCON0_LVDS_INTF_BITWIDTH(val) |

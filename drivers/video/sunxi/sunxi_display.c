@@ -583,7 +583,7 @@ static void sunxi_lcdc_panel_enable(void)
 	if (pin >= 0) {
 		gpio_request(pin, "lcd_backlight_pwm");
 
-		if (!strncmp(lcd->info.name, "LCD-OLinuXino-15.6FHD", strlen(lcd->info.name)))
+		if (lcd->id == 7894)
 			gpio_direction_output(pin, 0);
 		else
 			gpio_direction_output(pin, 1);
@@ -637,7 +637,7 @@ static void sunxi_lcdc_backlight_enable(void)
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin());
 	if (pin >= 0) {
-		if (!strncmp(lcd->info.name, "LCD-OLinuXino-15.6FHD", strlen(lcd->info.name)))
+		if (lcd->id == 7894)
 			gpio_direction_output(pin, 1);
 		else
 			gpio_direction_output(pin, 0);
@@ -1165,7 +1165,6 @@ void *video_hw_init(void)
 #else
 	char *lcd_mode = CONFIG_VIDEO_LCD_MODE;
 #endif
-
 
 	memset(&sunxi_display, 0, sizeof(struct sunxi_display));
 

@@ -14,6 +14,8 @@
 
 struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 	{
+		.id = 7859,
+		.compatible = "olimex,lcd-olinuxino-4.3",
 		{
 			.name = "LCD-OLinuXino-4.3TS",
 			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
@@ -34,6 +36,8 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 
 	},
 	{
+		.id = 8630,
+		.compatible = "olimex,lcd-olinuxino-5",
 		{
 			.name = "LCD-OLinuXino-5",
 			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
@@ -54,6 +58,8 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 
 	},
 	{
+		.id = 7864,
+		.compatible = "olimex,lcd-olinuxino-7",
 		{
 			.name = "LCD-OLinuXino-7",
 			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
@@ -74,66 +80,75 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 
 	},
 	{
+		.id = 9278,
+		.compatible = "olimex,lcd-olinuxino-10",
 		{
 			.name = "LCD-OLinuXino-7CTS",
 			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 		},
 		{
-			.pixelclock = 51000,
+			.pixelclock = 45000,
 			.hactive = 1024,
-			.hfp = 154,
-			.hbp = 150,
-			.hpw = 10,
+			.hfp = 10,
+			.hbp = 160,
+			.hpw = 6,
 			.vactive = 600,
-			.vfp = 12,
-			.vbp = 21,
-			.vpw = 2,
+			.vfp = 1,
+			.vbp = 22,
+			.vpw = 1,
 			.refresh = 60,
 			.flags = 0
 		}
 
 	},
 	{
+		.id = 7862,
+		.compatible = "olimex,lcd-olinuxino-10",
 		{
 			.name = "LCD-OLinuXino-10",
 			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 		},
 		{
-			.pixelclock = 51000,
+			.pixelclock = 45000,
 			.hactive = 1024,
-			.hfp = 154,
-			.hbp = 150,
-			.hpw = 10,
+			.hfp = 10,
+			.hbp = 160,
+			.hpw = 6,
 			.vactive = 600,
-			.vfp = 12,
-			.vbp = 21,
-			.vpw = 2,
+			.vfp = 1,
+			.vbp = 22,
+			.vpw = 1,
 			.refresh = 60,
 			.flags = 0
 		}
 
 	},
 	{
+		.id = 9284,
+		.compatible = "olimex,lcd-olinuxino-10",
 		{
 			.name = "LCD-OLinuXino-10CTS",
 			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 		},
 		{
-			.pixelclock = 51000,
+			.pixelclock = 45000,
 			.hactive = 1024,
-			.hfp = 154,
-			.hbp = 150,
-			.hpw = 10,
+			.hfp = 10,
+			.hbp = 160,
+			.hpw = 6,
 			.vactive = 600,
-			.vfp = 12,
-			.vbp = 21,
-			.vpw = 2,
+			.vfp = 1,
+			.vbp = 22,
+			.vpw = 1,
 			.refresh = 60,
 			.flags = 0
 		}
 
 	},
+#ifdef CONFIG_TARGET_A20_OLINUXINO
 	{
+		.id = 7891,
+		.compatible = "",
 		{
 			.name = "LCD-OLinuXino-15.6",
 		},
@@ -153,6 +168,8 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 
 	},
 	{
+		.id = 7894,
+		.compatible = "",
 		{
 			.name = "LCD-OLinuXino-15.6FHD",
 		},
@@ -172,10 +189,9 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 
 	},
 	{
-		{
-			.name = "",
-		},
+		.id = 0,
 	},
+#endif
 };
 
 struct lcd_olinuxino_eeprom lcd_olinuxino_eeprom;
@@ -231,19 +247,21 @@ static int lcd_olinuxino_eeprom_read(void)
 
 char * lcd_olinuxino_video_mode()
 {
-	struct lcd_olinuxino_board *lcd = lcd_olinuxino_boards;
 	struct lcd_olinuxino_mode *mode = NULL;
 	struct lcd_olinuxino_info *info = NULL;
-	char *s = env_get("lcd_olinuxino");
+	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
+	uint32_t i;
 	int ret;
 
-	while (s && strlen(lcd->info.name)) {
-		if (!strncmp(lcd->info.name, s, strlen(s))) {
-			info = &lcd->info;
-			mode = &lcd->mode;
-			break;
+
+	if (id) {
+		for (i = 0; i < ARRAY_SIZE(lcd_olinuxino_boards); i++) {
+			if (lcd_olinuxino_boards[i].id == id) {
+				info = &lcd_olinuxino_boards[i].info;
+				mode = &lcd_olinuxino_boards[i].mode;
+				break;
+			}
 		}
-		lcd++;
 	}
 
 	if (mode == NULL || info == NULL) {
@@ -278,9 +296,9 @@ char * lcd_olinuxino_video_mode()
 
 bool lcd_olinuxino_is_present()
 {
-	char *s = env_get("lcd_olinuxino");
+	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
 
-	if (!s)
+	if (!id)
 		return (lcd_olinuxino_eeprom.header == LCD_OLINUXINO_HEADER_MAGIC);
 	else
 		return true;
@@ -288,21 +306,16 @@ bool lcd_olinuxino_is_present()
 
 char * lcd_olinuxino_compatible()
 {
-	char *s = env_get("lcd_olinuxino");
+	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
+	uint32_t i;
 
-	if (!s)
+	if (!id)
 		return "olimex,lcd-olinuxino";
 
-	if (!strncmp(s, "LCD-OLinuXino-4.3TS", strlen(s)))
-		return "olimex,lcd-olinuxino-4.3";
-	else if (!strncmp(s, "LCD-OLinuXino-5", strlen(s)))
-		return "olimex,lcd-olinuxino-5";
-	else if (!strncmp(s, "LCD-OLinuXino-7", strlen(s)))
-		return "olimex,lcd-olinuxino-7";
-	else if (!strncmp(s, "LCD-OLinuXino-7CTS", strlen(s)) ||
-		 !strncmp(s, "LCD-OLinuXino-10", strlen(s)) ||
-		 !strncmp(s, "LCD-OLinuXino-10CTS", strlen(s)))
-		return "olimex,lcd-olinuxino-10";
+	for (i = 0; i < ARRAY_SIZE(lcd_olinuxino_boards); i++) {
+		if (lcd_olinuxino_boards[i].id == id)
+			return lcd_olinuxino_boards[i].compatible;
+	}
 
 	return "olimex,lcd-olinuxino";
 }
@@ -314,32 +327,25 @@ uint8_t lcd_olinuxino_dclk_phase()
 
 uint8_t lcd_olinuxino_interface()
 {
-	char *s = env_get("lcd_olinuxino");
-
-	/* Is not set assume LCD-DRIVER */
-	if (!s)
-		return LCD_OLINUXINO_IF_PARALLEL;
+	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
 
 	/* Check LVDS or PARALLEL */
-	if (!strncmp(s, "LCD-OLinuXino-15.6", strlen(s)) ||
-	    !strncmp(s, "LCD-OLinuXino-15.6FHD", strlen(s)))
-		return LCD_OLINUXINO_IF_LVDS;
-
-	return LCD_OLINUXINO_IF_PARALLEL;
+	return (id == 7891 || id == 7894) ?
+		LCD_OLINUXINO_IF_LVDS :
+		LCD_OLINUXINO_IF_PARALLEL;
 }
 
 struct lcd_olinuxino_board * lcd_olinuxino_get_data()
 {
-	struct lcd_olinuxino_board *lcd = lcd_olinuxino_boards;
-	char *s = env_get("lcd_olinuxino");
+	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
+	uint32_t i;
 
-	if (!s)
+	if (!id)
 		return NULL;
 
-	while (strlen(lcd->info.name)) {
-		if (!strncmp(lcd->info.name, s, strlen(s)))
-			return lcd;
-		lcd++;
+	for (i = 0; i < ARRAY_SIZE(lcd_olinuxino_boards); i++) {
+		if (lcd_olinuxino_boards[i].id == id)
+			return &lcd_olinuxino_boards[i];
 	}
 
 	return NULL;

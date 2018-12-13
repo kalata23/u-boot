@@ -181,29 +181,29 @@ static cmd_tbl_t cmd_config[] = {
 };
 #endif
 
+#if defined(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)
+#include "lcd_olinuxino.h"
+
 static int do_monitor_list(cmd_tbl_t *cmdtp, int flag,
 			   int argc, char *const argv[])
 {
+	struct lcd_olinuxino_board *lcd;
+
 	printf("\nSupported video outputs:\n");
 	printf("----------------------------------------\n");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino", "Video outout to the LCD connector with AUTO detect function");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-4.3TS", "Video output to LCD-OLinuXino-4.3TS");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-5", "Video output to LCD-OLinuXino-5");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-7", "Video output to LCD-OLinuXino-7");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-7CTS", "Video output to LCD-OLinuXino-7CTS");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-10", "Video output to LCD-OLinuXino-10");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-10CTS", "Video output to LCD-OLinuXino-10CTS");
-#ifdef CONFIG_TARGET_A20_OLINUXINO
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-15.6", "Video output to LCD-OLinuXino-15.6");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-15.6FHD", "Video output to LCD-OLinuXino-15.6FHD");
-#endif
-
+	printf("%-30s - Automatic LCD detection\n", "LCD-OLinuXino");
+	for (lcd = lcd_olinuxino_boards; lcd->id != 0; lcd++)
+		printf("%-30s - Resolution %dx%d\n", lcd->info.name,
+						     lcd->mode.hactive,
+						     lcd->mode.vactive);
 	return CMD_RET_SUCCESS;
 }
 
 static int do_monitor_set(cmd_tbl_t *cmdtp, int flag,
 			  int argc, char *const argv[])
 {
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_boards;
+	char temp[32];
 	char *p;
 	int i;
 
@@ -216,28 +216,28 @@ static int do_monitor_set(cmd_tbl_t *cmdtp, int flag,
 		p[i] = tolower(p[i]);
 	}
 
-	if (!strncmp(p, "lcd-olinuxino", strlen(p)))
-		env_set("lcd_olinuxino", "");
-	else if (!strncmp(p, "lcd-olinuxino-4.3ts", strlen(p)))
-		env_set("lcd_olinuxino", "LCD-OLinuXino-4.3TS");
-	else if (!strncmp(p, "lcd-olinuxino-5", strlen(p)))
-		env_set("lcd_olinuxino", "LCD-OLinuXino-5");
-	else if (!strncmp(p, "lcd-olinuxino-7", strlen(p)))
-		env_set("lcd_olinuxino", "LCD-OLinuXino-7");
-	else if (!strncmp(p, "lcd-olinuxino-7cts", strlen(p)))
-		env_set("lcd_olinuxino", "LCD-OLinuXino-7CTS");
-	else if (!strncmp(p, "lcd-olinuxino-10", strlen(p)))
-		env_set("lcd_olinuxino", "LCD-OLinuXino-10");
-	else if (!strncmp(p, "lcd-olinuxino-10cts", strlen(p)))
-		env_set("lcd_olinuxino", "LCD-OLinuXino-10CTS");
-#ifdef CONFIG_TARGET_A20_OLINUXINO
-	else if (!strncmp(p, "lcd-olinuxino-15.6", strlen(p)))
-		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6");
-	else if (!strncmp(p, "lcd-olinuxino-15.6fhd", strlen(p)))
-		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6FHD");
-#endif
-	else
-		printf("Invalid LCD! Run \"olinuxino monitor list\" for supported devices.\n");
+	if (!strcmp(p, "lcd-olinuxino") && strlen(p) == 13) {
+		printf("Enabling Automatic LCD-OLinuXino detection...\n");
+		env_set_ulong("lcd_olinuxino", 0);
+		return CMD_RET_SUCCESS;
+	} else {
+		while(lcd->id) {
+			/* Convert name to lowercase */
+			strcpy(temp, lcd->info.name);
+			for (i = 0; i < strlen(temp); i++)
+				temp[i] = tolower(temp[i]);
+
+			/* Compare name */
+			if (!strcmp(p, temp) && strlen(p) == strlen(temp)) {
+				printf("Enabling %s...\n", lcd->info.name);
+				env_set_ulong("lcd_olinuxino", lcd->id);
+				return CMD_RET_SUCCESS;
+			}
+			lcd++;
+		}
+	}
+
+	printf("Invalid LCD! Run \"olinuxino monitor list\" for supported devices.\n");
 
 	return CMD_RET_SUCCESS;
 }
@@ -246,20 +246,24 @@ static cmd_tbl_t cmd_monitor[] = {
 	U_BOOT_CMD_MKENT(list, 1, 0, do_monitor_list, "", ""),
 	U_BOOT_CMD_MKENT(set, 2, 0, do_monitor_set, "", ""),
 };
+#endif
 
 
 static int do_olinuxino_opts(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	cmd_tbl_t *cp;
 
+#if defined(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)
 	if (!strcmp(argv[0], "monitor"))
 		cp = find_cmd_tbl(argv[1], cmd_monitor, ARRAY_SIZE(cmd_monitor));
-#if defined(CONFIG_TARGET_A20_OLINUXINO)
-	else if (!strcmp(argv[0], "config"))
-		cp = find_cmd_tbl(argv[1], cmd_config, ARRAY_SIZE(cmd_config));
-#endif
 	else
-		return CMD_RET_USAGE;
+#endif
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+	if (!strcmp(argv[0], "config"))
+		cp = find_cmd_tbl(argv[1], cmd_config, ARRAY_SIZE(cmd_config));
+	else
+#endif
+	return CMD_RET_USAGE;
 
 	argc--;
 	argv++;
@@ -276,7 +280,9 @@ static cmd_tbl_t cmd_olinuxino[] = {
 #if defined(CONFIG_TARGET_A20_OLINUXINO)
 	U_BOOT_CMD_MKENT(config, CONFIG_SYS_MAXARGS, 0, do_olinuxino_opts, "", ""),
 #endif
+#if defined(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)
 	U_BOOT_CMD_MKENT(monitor, CONFIG_SYS_MAXARGS, 0, do_olinuxino_opts, "", ""),
+#endif
 };
 
 static int do_olinuxino_ops(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
@@ -313,9 +319,9 @@ U_BOOT_CMD(
 	"					aa:bb:cc:dd:ee:ff\n"
 	"					FF:FF:FF:FF:FF:FF\n"
 	"					aabbccddeeff\n"
-	"olinuxino monitor list		- Print supported video outputs\n"
-#else
-	"monitor list		- Print supported video outputs\n"
 #endif
+#if defined(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)
+	"olinuxino monitor list		- Print supported video outputs\n"
 	"olinuxino monitor set		- Set specific LCD\n"
+#endif
 	);
