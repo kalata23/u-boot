@@ -117,7 +117,7 @@ static int board_fix_model(void *blob)
 {
 	int offset;
 	int ret;
-	char rev[3];
+	char temp[10];
 
 	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
 	if (offset < 0)
@@ -129,9 +129,10 @@ static int board_fix_model(void *blob)
 	 *	id = <id>;
 	 *	revision = <revision>;
 	 */
-	sprintf(rev, "%c%c", eeprom->revision.major, eeprom->revision.minor);
-	ret = fdt_setprop_string(blob, offset, "revision", (const char *)rev);
-	ret |= fdt_setprop_u32(blob, offset, "id", eeprom->id);
+	sprintf(temp, "%c%c", eeprom->revision.major, eeprom->revision.minor);
+	ret = fdt_setprop_string(blob, offset, "revision", (const char *)temp);
+	sprintf(temp, "%d", eeprom->id);
+	ret |= fdt_setprop_string(blob, offset, "id",(const char *)temp);
 	ret |= fdt_setprop_string(blob, offset, "model", olimex_get_board_name());
 
 	return ret;
