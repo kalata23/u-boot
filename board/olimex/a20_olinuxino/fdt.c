@@ -131,6 +131,7 @@ static int board_fix_model(void *blob)
 	 */
 	sprintf(rev, "%c%c", eeprom->revision.major, eeprom->revision.minor);
 	ret = fdt_setprop_string(blob, offset, "revision", (const char *)rev);
+	ret |= fdt_setprop_u32(blob, offset, "id", eeprom->id);
 	ret |= fdt_setprop_string(blob, offset, "model", olimex_get_board_name());
 
 	return ret;
