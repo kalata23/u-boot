@@ -8,6 +8,8 @@
 #include <asm/arch/spl.h>
 #include <common.h>
 #include <i2c.h>
+#include <mmc.h>
+#include <spl.h>
 
 #include "board_detect.h"
 
@@ -49,6 +51,31 @@ int olimex_i2c_eeprom_read(void)
 	}
 
 	return 0;
+}
+
+int olimex_mmc_eeprom_read(void)
+{
+	struct mmc *mmc = NULL;
+	unsigned long count;
+	int ret = 0;
+
+	ret = mmc_initialize(NULL);
+	if (ret)
+		return ret;
+
+	mmc = find_mmc_device((sunxi_get_boot_device() == BOOT_DEVICE_MMC1) ? 0 : 1);
+	if (!mmc)
+		return -ENODEV;
+
+	ret = mmc_init(mmc);
+	if (ret)
+		return ret;
+
+	count = blk_dread(mmc_get_blk_desc(mmc), OLIMEX_MMC_SECTOR, 1, eeprom);
+	if (!count)
+		return -EIO;
+
+	return ret;
 }
 
 #ifndef CONFIG_SPL_BUILD
@@ -106,6 +133,49 @@ int olimex_i2c_eeprom_erase(void)
 	}
 
 	return 0;
+}
+
+int olimex_mmc_eeprom_write(void)
+{
+	struct mmc *mmc = NULL;
+	unsigned long count;
+	int ret = 0;
+
+	mmc = find_mmc_device((sunxi_get_boot_device() == BOOT_DEVICE_MMC1) ? 0 : 1);
+	if (!mmc)
+		return -ENODEV;
+
+	ret = mmc_init(mmc);
+	if (ret)
+		return ret;
+
+	count = blk_dwrite(mmc_get_blk_desc(mmc), OLIMEX_MMC_SECTOR, 1, eeprom);
+	if (!count)
+		return -EIO;
+
+	return ret;
+}
+
+int olimex_mmc_eeprom_erase(void)
+{
+	struct mmc *mmc = NULL;
+	unsigned long count;
+	int ret = 0;
+
+	mmc = find_mmc_device((sunxi_get_boot_device() == BOOT_DEVICE_MMC1) ? 0 : 1);
+	if (!mmc)
+		return -ENODEV;
+
+	ret = mmc_init(mmc);
+	if (ret)
+		return ret;
+
+	count = blk_derase(mmc_get_blk_desc(mmc), OLIMEX_MMC_SECTOR, 1);
+	if (!count)
+		return -EIO;
+
+	return ret;
+
 }
 #endif
 

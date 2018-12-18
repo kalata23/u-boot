@@ -8,12 +8,13 @@
  */
 
 #include <common.h>
+#include <fdt_support.h>
+#include <malloc.h>
+#include <mtd_node.h>
+#include <asm/arch/gpio.h>
+#include <jffs2/load_kernel.h>
 #include <linux/libfdt.h>
 #include <linux/sizes.h>
-#include <fdt_support.h>
-#include <mtd_node.h>
-#include <jffs2/load_kernel.h>
-#include <asm/arch/gpio.h>
 
 #include "../common/lcd_olinuxino.h"
 #include "../common/board_detect.h"
@@ -86,6 +87,8 @@ struct mtd_partition spi_partitions[] = {
 	MTD_PART("SPI.u-boot",			0x00000000,	SZ_2M),
 };
 
+DECLARE_GLOBAL_DATA_PTR;
+
 static int get_path_offset(void *blob, enum devices dev, char *dpath)
 {
 	char path[64];
@@ -110,6 +113,29 @@ success:
 	return offset;
 }
 
+static int board_fix_model(void *blob)
+{
+	int offset;
+	int ret;
+	char rev[3];
+
+	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+	if (offset < 0)
+		return offset;
+
+	/**
+	 * / {
+	 * 	model = <name>;
+	 *	id = <id>;
+	 *	revision = <revision>;
+	 */
+	sprintf(rev, "%c%c", eeprom->revision.major, eeprom->revision.minor);
+	ret = fdt_setprop_string(blob, offset, "revision", (const char *)rev);
+	ret |= fdt_setprop_string(blob, offset, "model", olimex_get_board_name());
+
+	return ret;
+
+}
 static int board_fix_atecc508a(void *blob)
 {
 	int offset;
@@ -482,6 +508,7 @@ static int board_fix_nand(void *blob)
 }
 
 static int (*olinuxino_fixes[]) (void *blob) = {
+	board_fix_model,
 	board_fix_spi_flash,
 	board_fix_atecc508a,
 	board_fix_nand,
@@ -491,8 +518,6 @@ int olinuxino_fdt_fixup(void *blob)
 {
 	uint8_t i;
 	int ret;
-
-	debug("Address of FDT blob: %p\n", (uint32_t *)blob);
 
 	ret = fdt_increase_size(blob, 65535);
 	if (ret < 0)
@@ -505,7 +530,7 @@ int olinuxino_fdt_fixup(void *blob)
 			return ret;
 	}
 
-	return ret;
+	return 0;
 }
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
@@ -606,7 +631,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	 * };
 	 */
 
-	 offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
 	if (offset < 0)
 		return offset;
 
@@ -1297,15 +1322,27 @@ int board_fix_fdt(void *blob)
 int ft_system_setup(void *blob, bd_t *bd)
 {
 	int ret = 0;
+	void *recovery;
 
-#ifdef CONFIG_FDT_FIXUP_PARTITIONS
+#if defined(CONFIG_FDT_FIXUP_PARTITIONS) && defined(CONFIG_NAND)
 	static struct node_info nodes[] = {
 		{ "fixed-partitions", MTD_DEV_TYPE_NOR, },
 	};
 #endif
+
+	/* If OLinuXino configuration is not valid exit */
+	if (!olimex_eeprom_is_valid())
+		return 0;
+
+	/* First make copy of the current ftd blob */
+	recovery = malloc(gd->fdt_size);
+	memcpy(recovery, blob, gd->fdt_size);
+
+	/* Execute fixups */
+	printf("Executing fdt system setup...\n");
 	ret = olinuxino_fdt_fixup(blob);
 	if (ret < 0)
-		return ret;
+		goto exit_recover;
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	/* Check if lcd is the default monitor */
@@ -1321,15 +1358,22 @@ int ft_system_setup(void *blob, bd_t *bd)
 			ret = board_fix_lcd_olinuxino_rgb(blob);
 
 		if (ret < 0)
-			return ret;
+			goto exit_recover;
 		}
 #endif
 
-#ifdef CONFIG_FDT_FIXUP_PARTITIONS
+#if defined(CONFIG_FDT_FIXUP_PARTITIONS) && defined(CONFIG_NAND)
 	if (eeprom->config.storage == 'n')
 		fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
 
 #endif
-	return ret;
+	return 0;
+
+exit_recover:
+	/* Copy back revocery blob */
+	printf("Recovering the FDT blob...\n");
+	memcpy(blob, recovery, gd->fdt_size);
+
+	return 0;
 }
 #endif

@@ -154,15 +154,24 @@ static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 		}
 	}
 
-	printf("Erasing previous configuration...\n");
-	if (olimex_i2c_eeprom_erase())
-		return CMD_RET_FAILURE;
+	printf("Erasing EEPROM configuration...\n");
+	if (olimex_i2c_eeprom_erase()) {
+		printf("Erasing MMC configuration...\n");
+		if (olimex_mmc_eeprom_erase())
+			return CMD_RET_FAILURE;
+	}
 
-	printf("Writting configuration EEPROM...\n");
+
 	memcpy(eeprom, &info, 256);
 
-	olimex_i2c_eeprom_write();
-	olimex_i2c_eeprom_read();
+	printf("Writting EEPROM configuration...\n");
+	if (!olimex_i2c_eeprom_write())
+		olimex_i2c_eeprom_read();
+
+	printf("Writting MMC configuration...\n");
+	if (!olimex_mmc_eeprom_write())
+		olimex_mmc_eeprom_read();
+
 	return CMD_RET_SUCCESS;
 }
 

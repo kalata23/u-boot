@@ -444,13 +444,35 @@ void sunxi_board_init(void)
 	else
 		printf("Failed to set core voltage! Can't set CPU frequency\n");
 
-	if (olimex_i2c_eeprom_read())
-		printf("EEPROM: Error\n");
-	else if (olimex_eeprom_is_valid())
-		printf("EEPROM: Ready\n");
-	else
-		printf("EEPROM: Corrupted!\n");
 }
+
+#if defined(CONFIG_SPL_BOARD_INIT)
+void spl_board_init(void)
+{
+	uint32_t bootdev;
+
+	/* First try loading from EEPROM */
+	printf("Configuration EEPROM: ");
+	if (olimex_i2c_eeprom_read()) {
+		printf("Error\n");
+
+		/* If booted from eMMC/MMC try loading configuration */
+		bootdev = spl_boot_device();
+		if (bootdev != BOOT_DEVICE_MMC1 && bootdev != BOOT_DEVICE_MMC2)
+			return;
+		printf("Configuration MMC:    ");
+		if (olimex_mmc_eeprom_read()) {
+			printf("Error\n");
+			return;
+		}
+	}
+	printf("Ready\n");
+
+	/* Check if content is valid */
+	printf("Configuration valid:  %s\n", olimex_eeprom_is_valid() ?
+					     "Yes" : "Corrupted");
+}
+#endif
 
 #ifndef CONFIG_SPL_BUILD
 
@@ -600,8 +622,10 @@ static void setup_environment(const void *fdt)
 			env_set("mtdids", SPI_MTDIDS);
 			env_set("mtdparts", SPI_MTDPARTS);
 		} else if (eeprom->config.storage == 'n') {
+#if defined(CONFIG_NAND)
 			env_set("mtdids", NAND_MTDIDS);
 			env_set("mtdparts", NAND_MTDPARTS);
+#endif
 		}
 	}
 

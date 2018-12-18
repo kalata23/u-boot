@@ -21,6 +21,13 @@ extern struct olimex_eeprom *eeprom;
 #define OLIMEX_EEPROM_ADDRESS		0x50
 #define OLIMEX_EEPROM_MAGIC_HEADER	0x4f4caa55
 
+/**
+ * In the board has corrupted EEPROM (or it's very old without one)
+ * a sector in the MMC can be used as backup storage.
+ */
+#define OLIMEX_MMC_SECTOR		0x0F	/* One sector before SPL */
+
+
 struct olimex_eeprom {
 	uint32_t header;
 	uint32_t id;
@@ -44,6 +51,11 @@ struct olimex_eeprom {
 int olimex_i2c_eeprom_read(void);
 int olimex_i2c_eeprom_write(void);
 int olimex_i2c_eeprom_erase(void);
+
+/* Raw MMC access function */
+int olimex_mmc_eeprom_read(void);
+int olimex_mmc_eeprom_write(void);
+int olimex_mmc_eeprom_erase(void);
 
 bool olimex_eeprom_is_valid(void);
 
