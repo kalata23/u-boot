@@ -452,7 +452,7 @@ void spl_board_init(void)
 	uint32_t bootdev;
 
 	/* First try loading from EEPROM */
-	printf("Configuration EEPROM: ");
+	printf("EEPROM: ");
 	if (olimex_i2c_eeprom_read()) {
 		printf("Error\n");
 
@@ -460,7 +460,7 @@ void spl_board_init(void)
 		bootdev = spl_boot_device();
 		if (bootdev != BOOT_DEVICE_MMC1 && bootdev != BOOT_DEVICE_MMC2)
 			return;
-		printf("Configuration MMC:    ");
+		printf("MMC:    ");
 		if (olimex_mmc_eeprom_read()) {
 			printf("Error\n");
 			return;
@@ -469,8 +469,7 @@ void spl_board_init(void)
 	printf("Ready\n");
 
 	/* Check if content is valid */
-	printf("Configuration valid:  %s\n", olimex_eeprom_is_valid() ?
-					     "Yes" : "Corrupted");
+	printf("Config: %s\n", olimex_eeprom_is_valid() ? "Valid" : "Corrupted");
 }
 #endif
 
