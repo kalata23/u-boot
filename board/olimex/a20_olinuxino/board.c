@@ -59,12 +59,12 @@ void eth_init_board(void)
  		GMAC_MODE_MII : GMAC_MODE_RGMII;
 
 	if (olimex_board_is_lime2()) {
-		if (eeprom->revision.major > 'E')
-			/* RTL8211E */
-			tx_delay = 2;
-		else if (eeprom->revision.major > 'G')
+		if (eeprom->revision.major > 'G')
 			/* KSZ9031 */
 			tx_delay = 4;
+		else if (eeprom->revision.major > 'E')
+			/* RTL8211E */
+			tx_delay = 2;
 	} else if (olimex_board_is_som204_evb()) {
 		tx_delay = 4;
 	}
@@ -669,11 +669,33 @@ static void setup_environment(const void *fdt)
 
 }
 
+static int olinuxino_parse_mmc_boot_sector(void)
+{
+	struct mmc *mmc = NULL;
+	uint8_t header[512];
+	uint32_t count;
+	int ret;
+
+	mmc = find_mmc_device(1);
+	if (!mmc)
+		return -ENODEV;
+
+	ret = mmc_init(mmc);
+	if (ret)
+		return ret;
+
+	count = blk_dread(mmc_get_blk_desc(mmc), 16, 1, header);
+	if (!count)
+		return -EIO;
+
+	return (memcmp((void *)&header[4], BOOT0_MAGIC, 8) == 0);
+}
+
 int misc_init_r(void)
 {
 	__maybe_unused struct udevice *dev;
-	__maybe_unused int ret;
 	uint boot;
+	int ret;
 
 	env_set("fel_booted", NULL);
 	env_set("fel_scriptaddr", NULL);
@@ -690,7 +712,17 @@ int misc_init_r(void)
 	} else if (boot == BOOT_DEVICE_MMC2) {
 		env_set("mmc_bootdev", "1");
 	} else if (boot == BOOT_DEVICE_SPI) {
+
 		env_set("spi_booted", "1");
+
+		/**
+		 * When booting from SPI check if it's failsave
+		 * or it's intentional. To do this check if there
+		 * is eMMC installed on the board, read sector 16 and
+		 * search for boot0 magic header */
+		if (eeprom->config.storage == 'e')
+			if (olinuxino_parse_mmc_boot_sector())
+				env_set("mmc_bootdev", "1");
 	}
 
 	/* Setup environment */
