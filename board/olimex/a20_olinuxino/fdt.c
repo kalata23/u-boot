@@ -183,11 +183,15 @@ static int board_fix_spi_flash(void *blob)
 
 
 	/**
-	 * Some boards, have both eMMC and SPI flash:
-	 *   - A20-SOM204-1Gs16Me16G-MC (8958)
-	 *   - A20-OLinuXino-LIME2-e16Gs16M (9604)
+	 * Some boards, have both eMMC and SPI flash
 	 */
-	if (eeprom->config.storage != 's' && eeprom->id != 8958 && eeprom->id != 9604)
+	 if (eeprom->id != 8958 &&		// A20-SOM204-1Gs16Me16G-MC
+ 	    eeprom->id != 9604 &&		// A20-OLinuXino-LIME2-e16Gs16M
+ 	    eeprom->id != 9613 &&		// A20-OLinuXino-LIME2-e4Gs16M"
+ 	    eeprom->id != 9047 &&		// A20-SOM-e16Gs16M
+ 	    eeprom->id != 9684 &&		// A20-OLinuXino-MICRO-e4Gs16M
+ 	    eeprom->id != 9689 && 		// A20-OLinuXino-MICRO-e16Gs16M
+ 	    eeprom->config.storage != 's')
 		return 0;
 
 	/*

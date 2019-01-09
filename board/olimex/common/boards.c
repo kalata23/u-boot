@@ -124,6 +124,14 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(9231, "A20-OLinuXino-MICRO-s16MB", "sun7i-a20-olinuxino-micro.dtb")
 		OLINUXINO_CONFIG(SPI, MBYTES(16), GBYTES(1), COM)
 	},
+	{
+		OLINUXINO_BOARD(9684, "A20-OLinuXino-MICRO-e4Gs16M", "sun7i-a20-olinuxino-micro-emmc.dtb")
+		OLINUXINO_CONFIG(SPI, MBYTES(4), GBYTES(1), COM)
+	},
+	{
+		OLINUXINO_BOARD(9689, "A20-OLinuXino-MICRO-e16Gs16M", "sun7i-a20-olinuxino-micro-emmc.dtb")
+		OLINUXINO_CONFIG(SPI, MBYTES(16), GBYTES(1), COM)
+	},
 
 	/* T2-OLinuXino-MICRO */
 	{
@@ -163,6 +171,10 @@ struct olinuxino_boards olinuxino_boards[] = {
 	{
 		OLINUXINO_BOARD(9148, "A20-SOM-e16GB-IND", "sun7i-a20-olimex-som-evb-emmc.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(1), IND)
+	},
+	{
+		OLINUXINO_BOARD(9047, "A20-SOM-e16Gs16M", "sun7i-a20-olimex-som-evb-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(1), COM)
 	},
 
 	/* T2-SOM */
@@ -234,6 +246,8 @@ bool olimex_board_is_micro()
 		case 4615:
 		case 8918:
 		case 9231:
+		case 9684:
+		case 9689:
 
 		case 9223:
 		case 9235:
@@ -294,6 +308,7 @@ bool olimex_board_is_som_evb()
 		case 8922:
 		case 9155:
 		case 9148:
+		case 9047:
 
 		case 9259:
 			return true;

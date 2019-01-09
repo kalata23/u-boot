@@ -255,9 +255,12 @@ int board_init(void)
 
 #ifdef CONFIG_DM_SPI_FLASH
 		if (eeprom->config.storage == 's' ||
-		    eeprom->id == 8958 ||
-		    eeprom->id == 9604 ||
-		    eeprom->id == 9613) {
+		    eeprom->id == 8958 ||		// A20-SOM204-1Gs16Me16G-MC
+		    eeprom->id == 9604 ||		// A20-OLinuXino-LIME2-e16Gs16M
+		    eeprom->id == 9613 ||		// A20-OLinuXino-LIME2-e4Gs16M"
+		    eeprom->id == 9047 ||		// A20-SOM-e16Gs16M
+		    eeprom->id == 9684 ||		// A20-OLinuXino-MICRO-e4Gs16M
+		    eeprom->id == 9689) {		// A20-OLinuXino-MICRO-e16Gs16M
 
 			ret = uclass_first_device(UCLASS_SPI_FLASH, &dev);
 			if (ret) {
@@ -610,13 +613,19 @@ static void setup_environment(const void *fdt)
 
 		/**
 		 * Setup mtdparts
-		 * A20-SOM204xxxx has both eMMC and SPI flash
-		 * A20-OLinuXino-LIME2-e16Gs16M has both eMMC and SPI flash
-		 * A20-OLinuXino-LIME2-e4Gs16M has both eMMC and SPI flash
+		 * A20-SOM204-1Gs16Me16G-MC
+		 * A20-OLinuXino-LIME2-e16Gs16M
+		 * A20-OLinuXino-LIME2-e4Gs16M
+		 * A20-SOM-e16Gs16M
+		 * A20-OLinuXino-MICRO-e4Gs16M
+		 * A20-OLinuXino-MICRO-e16Gs16M
 		 */
-		if (eeprom->id == 8958 ||
-		    eeprom->id == 9604 ||
-		    eeprom->id == 9613 ||
+		if (eeprom->id == 8958 ||		// A20-SOM204-1Gs16Me16G-MC
+		    eeprom->id == 9604 ||		// A20-OLinuXino-LIME2-e16Gs16M
+		    eeprom->id == 9613 ||		// A20-OLinuXino-LIME2-e4Gs16M"
+		    eeprom->id == 9047 ||		// A20-SOM-e16Gs16M
+		    eeprom->id == 9684 ||		// A20-OLinuXino-MICRO-e4Gs16M
+		    eeprom->id == 9689 || 		// A20-OLinuXino-MICRO-e16Gs16M
 		    eeprom->config.storage == 's') {
 			env_set("mtdids", SPI_MTDIDS);
 			env_set("mtdparts", SPI_MTDPARTS);
