@@ -87,8 +87,8 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_CONFIG(SPI, MBYTES(16), GBYTES(1), IND)
 	},
 	{
-		OLINUXINO_BOARD(9243 , "T2-OLinuXino-LIME2-e4GB-IND", "sun7i-a20-olinuxino-lime2-emmc.dtb")
-		OLINUXINO_CONFIG(EMMC, GBYTES(4), GBYTES(1), IND)
+		OLINUXINO_BOARD(9243 , "T2-OLinuXino-LIME2-e8Gs16M-IND", "sun7i-a20-olinuxino-lime2-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(8), GBYTES(1), IND)
 	},
 
 	/* A20-OLinuXino-MICRO */

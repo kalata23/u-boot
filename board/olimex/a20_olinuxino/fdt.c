@@ -191,6 +191,7 @@ static int board_fix_spi_flash(void *blob)
  	    eeprom->id != 9047 &&		// A20-SOM-e16Gs16M
  	    eeprom->id != 9684 &&		// A20-OLinuXino-MICRO-e4Gs16M
  	    eeprom->id != 9689 && 		// A20-OLinuXino-MICRO-e16Gs16M
+	    eeprom->id != 9243 && 		// T2-OLinuXino-LIME2-e8Gs16M-IND
  	    eeprom->config.storage != 's')
 		return 0;
 
