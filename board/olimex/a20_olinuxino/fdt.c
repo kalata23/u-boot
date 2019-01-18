@@ -1214,11 +1214,14 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	if (lcd) {
-		if (lcd->id == 9284 || lcd->id == 9278 || lcd->id == 7862)
+		if (lcd->id == 9284 || 				/* LCD-OLinuXino-10CTS */
+		    lcd->id == 9278 ||				/* LCD-OLinuXino-7CTS */
+		    lcd->id == 7862)				/* LCD-OLinuXino-10 */
 			ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
 	} else {
-		if (lcd_olinuxino_eeprom.id == 9278 ||
-		    lcd_olinuxino_eeprom.id == 9284)
+		if (lcd_olinuxino_eeprom.id == 9284 ||		/* LCD-OLinuXino-10CTS */
+		    lcd_olinuxino_eeprom.id == 9278 ||		/* LCD-OLinuXino-7CTS */
+		    lcd_olinuxino_eeprom.id == 9278)		/* LCD-OLinuXino-10 */
 			ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
 	}
 	if (ret < 0)
