@@ -571,27 +571,23 @@ static void parse_spl_header(const uint32_t spl_addr)
  */
 static void setup_environment(const void *fdt)
 {
-	char serial_string[17] = { 0 };
 	unsigned int sid[4];
 	uint8_t mac_addr[6] = { 0, 0, 0, 0, 0, 0 };
 	char ethaddr[16], digit[3], strrev[3];
+	char cmd[40];
 	int i, ret;
 	char *p;
 
 	if (olimex_eeprom_is_valid()) {
 
-		if (!env_get("board_id"))
-			env_set_ulong("board_id", eeprom->id);
+		env_set_ulong("board_id", eeprom->id);
+		env_set("board_name", olimex_get_board_name());
 
-		if (!env_get("board_name"))
-			env_set("board_name", olimex_get_board_name());
+		strrev[0] = (eeprom->revision.major < 'A' || eeprom->revision.major > 'Z') ? 0 : eeprom->revision.major;
+		strrev[1] = (eeprom->revision.minor < '1' || eeprom->revision.minor > '9') ? 0 : eeprom->revision.minor;
+		strrev[2] = 0;
+		env_set("board_rev", strrev);
 
-		if (!env_get("board_rev")) {
-			strrev[0] = (eeprom->revision.major < 'A' || eeprom->revision.major > 'Z') ? 0 : eeprom->revision.major;
-			strrev[1] = (eeprom->revision.minor < '1' || eeprom->revision.minor > '9') ? 0 : eeprom->revision.minor;
-			strrev[2] = 0;
-			env_set("board_rev", strrev);
-		}
 
 		p = eeprom->mac;
 		for (i = 0; i < 6; i++) {
@@ -669,14 +665,11 @@ static void setup_environment(const void *fdt)
 		}
 	}
 
-	if (!env_get("serial#")) {
-		snprintf(serial_string, sizeof(serial_string),
-			"%08x", eeprom->serial);
-		env_set("serial#", serial_string);
-	}
+	/* Always overwrite serial and fdtfile */
+	sprintf(cmd,"env set -f serial# %08x", eeprom->serial);
+	run_command(cmd, 0);
 
-	if (!env_get("fdtfile"))
-		env_set("fdtfile", olimex_get_board_fdt());
+	env_set("fdtfile", olimex_get_board_fdt());
 
 }
 
