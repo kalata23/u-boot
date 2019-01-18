@@ -213,7 +213,7 @@
 
 #define	BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
 	"bootcmd_nand=" \
-		"\0"
+		"echo 'NAND booting is temporary disabled.'\0"
 
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 		"nand "
