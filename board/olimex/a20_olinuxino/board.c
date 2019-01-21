@@ -673,7 +673,7 @@ static void setup_environment(const void *fdt)
 
 }
 
-static int olinuxino_parse_mmc_boot_sector(void)
+static __maybe_unused int olinuxino_parse_mmc_boot_sector(void)
 {
 	struct mmc *mmc = NULL;
 	uint8_t header[512];
@@ -720,13 +720,13 @@ int misc_init_r(void)
 		env_set("spi_booted", "1");
 
 		/**
-		 * When booting from SPI check if it's failsave
-		 * or it's intentional. To do this check if there
-		 * is eMMC installed on the board, read sector 16 and
-		 * search for boot0 magic header */
+		 * When booting from SPI always set mmc_bootdev
+		 * to the eMMC
+		 */
 		if (eeprom->config.storage == 'e')
-			if (olinuxino_parse_mmc_boot_sector())
-				env_set("mmc_bootdev", "1");
+ 			env_set("mmc_bootdev", "1");
+		else
+			env_set("mmc_bootdev", "0");
 	}
 
 	/* Setup environment */
