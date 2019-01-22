@@ -254,14 +254,7 @@ int board_init(void)
 		}
 
 #ifdef CONFIG_DM_SPI_FLASH
-		if (eeprom->id == 8958 ||		// A20-SOM204-1Gs16Me16G-MC
-		    eeprom->id == 9604 ||		// A20-OLinuXino-LIME2-e16Gs16M
-		    eeprom->id == 9613 ||		// A20-OLinuXino-LIME2-e4Gs16M"
-		    eeprom->id == 9047 ||		// A20-SOM-e16Gs16M
-		    eeprom->id == 9684 ||		// A20-OLinuXino-MICRO-e4Gs16M
-		    eeprom->id == 9689 ||		// A20-OLinuXino-MICRO-e16Gs16M
-		    eeprom->id == 9243 ||		// T2-OLinuXino-LIME2-e8Gs16M-IND
-		    eeprom->config.storage == 's') {
+		if (olimex_board_has_spi()) {
 
 			ret = uclass_first_device(UCLASS_SPI_FLASH, &dev);
 			if (ret) {
@@ -617,14 +610,7 @@ static void setup_environment(const void *fdt)
 		 * A20-OLinuXino-MICRO-e4Gs16M
 		 * A20-OLinuXino-MICRO-e16Gs16M
 		 */
-		if (eeprom->id == 8958 ||		// A20-SOM204-1Gs16Me16G-MC
-		    eeprom->id == 9604 ||		// A20-OLinuXino-LIME2-e16Gs16M
-		    eeprom->id == 9613 ||		// A20-OLinuXino-LIME2-e4Gs16M"
-		    eeprom->id == 9047 ||		// A20-SOM-e16Gs16M
-		    eeprom->id == 9684 ||		// A20-OLinuXino-MICRO-e4Gs16M
-		    eeprom->id == 9689 || 		// A20-OLinuXino-MICRO-e16Gs16M
-		    eeprom->id == 9243 ||		// T2-OLinuXino-LIME2-e8Gs16M-IND
-		    eeprom->config.storage == 's') {
+		if (olimex_board_has_spi()) {
 			env_set("mtdids", SPI_MTDIDS);
 			env_set("mtdparts", SPI_MTDPARTS);
 		} else if (eeprom->config.storage == 'n') {

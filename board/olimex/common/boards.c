@@ -328,6 +328,26 @@ bool olimex_board_is_som204_evb()
 			return false;
 	}
 }
+
+bool olimex_board_has_spi(void)
+{
+	if (eeprom->config.storage == 's')
+		return true;
+
+	/* Some boards have both eMMC and SPI */
+	switch (eeprom->id) {
+		case 8958:		// A20-SOM204-1Gs16Me16G-MC
+		case 9604:		// A20-OLinuXino-LIME2-e16Gs16M
+		case 9613:		// A20-OLinuXino-LIME2-e4Gs16M"
+		case 9047:		// A20-SOM-e16Gs16M
+		case 9684:		// A20-OLinuXino-MICRO-e4Gs16M
+		case 9689:		// A20-OLinuXino-MICRO-e16Gs16M
+		case 9243:		// T2-OLinuXino-LIME2-e8Gs16M-IND
+			return true;
+		default:
+			return false;
+	}
+}
 #endif
 
 const char * olimex_get_lcd_pwr_pin()

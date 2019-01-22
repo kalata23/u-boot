@@ -185,14 +185,7 @@ static int board_fix_spi_flash(void *blob)
 	/**
 	 * Some boards, have both eMMC and SPI flash
 	 */
-	 if (eeprom->id != 8958 &&		// A20-SOM204-1Gs16Me16G-MC
- 	    eeprom->id != 9604 &&		// A20-OLinuXino-LIME2-e16Gs16M
- 	    eeprom->id != 9613 &&		// A20-OLinuXino-LIME2-e4Gs16M"
- 	    eeprom->id != 9047 &&		// A20-SOM-e16Gs16M
- 	    eeprom->id != 9684 &&		// A20-OLinuXino-MICRO-e4Gs16M
- 	    eeprom->id != 9689 && 		// A20-OLinuXino-MICRO-e16Gs16M
-	    eeprom->id != 9243 && 		// T2-OLinuXino-LIME2-e8Gs16M-IND
- 	    eeprom->config.storage != 's')
+	 if (!olimex_board_has_spi())
 		return 0;
 
 	/*
@@ -1315,6 +1308,13 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 			return offset;
 
 		ret = fdt_setprop_empty(blob, offset, "allwinner,ts-attached");
+
+		/* Some board comes with inverted x axis */
+		if (lcd && (
+			lcd->id == 7862 || 	/*  LCD-OLinuXino-10 */
+			lcd->id == 7864		/*  LCD-OLinuXino-7 */
+		))
+			ret |= fdt_setprop_empty(blob, offset, "touchscreen-inverted-x");
 	}
 
 	return ret;

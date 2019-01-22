@@ -70,6 +70,8 @@ bool olimex_board_is_lime2(void);
 bool olimex_board_is_micro(void);
 bool olimex_board_is_som_evb(void);
 bool olimex_board_is_som204_evb(void);
+
+bool olimex_board_has_spi(void);
 #endif
 
 #endif /* __BOARDS_H */
