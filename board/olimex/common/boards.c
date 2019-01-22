@@ -21,12 +21,22 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_CONFIG(NAND, GBYTES(4), MBYTES(512), COM)
 	},
 	{
-		OLINUXINO_BOARD(8934, "A20-OLinuXino-LIME-n8GB", "sun7i-a20-olinuxino-lime.dtb")
+		OLINUXINO_BOARD(8934, "A20-OLinuXino-LIME-n8G", "sun7i-a20-olinuxino-lime.dtb")
 		OLINUXINO_CONFIG(NAND, GBYTES(8), MBYTES(512), COM)
 	},
 	{
 		OLINUXINO_BOARD(9076, "A20-OLinuXino-LIME-s16MB", "sun7i-a20-olinuxino-lime.dtb")
 		OLINUXINO_CONFIG(SPI, MBYTES(16), MBYTES(512), COM)
+	},
+	{
+		OLINUXINO_BOARD(9516, "A20-OLinuXino-LIME-e16Gs16M", "sun7i-a20-olinuxino-lime-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(16), MBYTES(512), COM)
+
+	},
+	{
+		OLINUXINO_BOARD(9696, "A20-OLinuXino-LIME-e4Gs16M", "sun7i-a20-olinuxino-lime-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(4), MBYTES(512), COM)
+
 	},
 
 	/* T2-OLinuXino-Lime */
@@ -35,12 +45,17 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_CONFIG(NONE, -1, MBYTES(512), IND)
 	},
 	{
-		OLINUXINO_BOARD(9215, "T2-OLinuXino-LIME-s16MB-IND", "sun7i-a20-olinuxino-lime.dtb")
+		OLINUXINO_BOARD(9215, "T2-OLinuXino-LIME-s16M-IND", "sun7i-a20-olinuxino-lime.dtb")
 		OLINUXINO_CONFIG(SPI, MBYTES(16), MBYTES(512), IND)
 	},
 	{
-		OLINUXINO_BOARD(9219, "T2-OLinuXino-LIME-e4GB-IND", "sun7i-a20-olinuxino-lime-emmc.dtb")
+		OLINUXINO_BOARD(9219, "T2-OLinuXino-LIME-e4G-IND", "sun7i-a20-olinuxino-lime-emmc.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(4), MBYTES(512), IND)
+	},
+	{
+		OLINUXINO_BOARD(9734, "T2-OLinuXino-LIME-e4Gs16M-IND", "sun7i-a20-olinuxino-lime-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(4), MBYTES(512), IND)
+
 	},
 
 	/* A20-OLinuXino-Lime2 */
@@ -266,10 +281,13 @@ bool olimex_board_is_lime()
 		case 7743:
 		case 8934:
 		case 9076:
+		case 9516:
+		case 9696:
 
 		case 9211:
 		case 9215:
 		case 9219:
+		case 9734:
 			return true;
 
 		default:
@@ -337,13 +355,21 @@ bool olimex_board_has_spi(void)
 	/* Some boards have both eMMC and SPI */
 	switch (eeprom->id) {
 		case 8958:		// A20-SOM204-1Gs16Me16G-MC
+
 		case 9604:		// A20-OLinuXino-LIME2-e16Gs16M
 		case 9613:		// A20-OLinuXino-LIME2-e4Gs16M"
+		case 9243:		// T2-OLinuXino-LIME2-e8Gs16M-IND
+
 		case 9047:		// A20-SOM-e16Gs16M
+
 		case 9684:		// A20-OLinuXino-MICRO-e4Gs16M
 		case 9689:		// A20-OLinuXino-MICRO-e16Gs16M
-		case 9243:		// T2-OLinuXino-LIME2-e8Gs16M-IND
+
+		case 9516:		// A20-OLinuXino-LIME-e16Gs16M
+		case 9696:		// A20-OLinuXino-LIME-e4Gs16M
+		case 9734:		// T2-OLinuXino-LIME-e4Gs16M-IND
 			return true;
+
 		default:
 			return false;
 	}
