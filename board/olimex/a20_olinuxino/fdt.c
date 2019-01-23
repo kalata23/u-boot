@@ -1311,8 +1311,9 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 
 		/* Some board comes with inverted x axis */
 		if (lcd && (
-			lcd->id == 7862 || 	/*  LCD-OLinuXino-10 */
-			lcd->id == 7864		/*  LCD-OLinuXino-7 */
+			lcd->id == 7862 ||	/*  LCD-OLinuXino-10 */
+			lcd->id == 7864 ||	/*  LCD-OLinuXino-7 */
+			lcd->id == 7859		/* LCD-OLinuXino-4.3TS */
 		))
 			ret |= fdt_setprop_empty(blob, offset, "touchscreen-inverted-x");
 	}
