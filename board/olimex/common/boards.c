@@ -141,11 +141,11 @@ struct olinuxino_boards olinuxino_boards[] = {
 	},
 	{
 		OLINUXINO_BOARD(9684, "A20-OLinuXino-MICRO-e4Gs16M", "sun7i-a20-olinuxino-micro-emmc.dtb")
-		OLINUXINO_CONFIG(SPI, MBYTES(4), GBYTES(1), COM)
+		OLINUXINO_CONFIG(EMMC, GBYTES(4), GBYTES(1), COM)
 	},
 	{
 		OLINUXINO_BOARD(9689, "A20-OLinuXino-MICRO-e16Gs16M", "sun7i-a20-olinuxino-micro-emmc.dtb")
-		OLINUXINO_CONFIG(SPI, MBYTES(16), GBYTES(1), COM)
+		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(1), COM)
 	},
 
 	/* T2-OLinuXino-MICRO */
