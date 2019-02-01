@@ -162,7 +162,11 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_CONFIG(SPI, MBYTES(16), GBYTES(1), IND)
 	},
 	{
-		OLINUXINO_BOARD(9739, "T2-OLinuXino-MICRO-e4GS16M-IND", "sun7i-a20-olinuxino-micro-emmc.dtb")
+		OLINUXINO_BOARD(9739, "T2-OLinuXino-MICRO-e4Gs16M-IND", "sun7i-a20-olinuxino-micro-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(4), GBYTES(1), IND)
+	},
+	{
+		OLINUXINO_BOARD(9789, "T2-OLinuXino-MICRO-e4Gs16M-IND", "sun7i-a20-olinuxino-micro-emmc.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(4), GBYTES(1), IND)
 	},
 
@@ -272,6 +276,7 @@ bool olimex_board_is_micro()
 		case 9235:
 		case 9227:
 		case 9739:
+		case 9789:
 			return true;
 
 		default:
@@ -369,7 +374,8 @@ bool olimex_board_has_spi(void)
 
 		case 9684:		// A20-OLinuXino-MICRO-e4Gs16M
 		case 9689:		// A20-OLinuXino-MICRO-e16Gs16M
-		case 9739:		// T2-OLinuXino-MICRO-e4GS16M-IND
+		case 9739:		// T2-OLinuXino-MICRO-e4Gs16M-IND
+		case 9789:		// T2-OLinuXino-MICRO-e4Gs16M-IND
 
 		case 9516:		// A20-OLinuXino-LIME-e16Gs16M
 		case 9696:		// A20-OLinuXino-LIME-e4Gs16M
