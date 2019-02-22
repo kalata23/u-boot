@@ -205,6 +205,13 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(9259, "T2-SOM-IND", "sun7i-a20-olimex-som-evb.dtb")
 		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), IND)
 	},
+	{
+		OLINUXINO_BOARD(9827, "T2-SOM-e8Gs16M-IND", "sun7i-a20-olimex-som-evb-emmc.dtb")
+		OLINUXINO_CONFIG(NONE, GBYTES(8), GBYTES(1), IND)
+	},
+
+
+
 
 	/* A20-SOM204 */
 	{
@@ -339,6 +346,7 @@ bool olimex_board_is_som_evb()
 		case 9047:
 
 		case 9259:
+		case 9827:
 			return true;
 
 		default:
@@ -380,6 +388,8 @@ bool olimex_board_has_spi(void)
 		case 9516:		// A20-OLinuXino-LIME-e16Gs16M
 		case 9696:		// A20-OLinuXino-LIME-e4Gs16M
 		case 9734:		// T2-OLinuXino-LIME-e4Gs16M-IND
+
+		case 9827:		// T2-SOM-e8Gs16M-IND
 			return true;
 
 		default:
