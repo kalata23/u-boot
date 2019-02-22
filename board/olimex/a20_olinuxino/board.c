@@ -65,7 +65,7 @@ void eth_init_board(void)
 		else if (eeprom->revision.major > 'E')
 			/* RTL8211E */
 			tx_delay = 2;
-	} else if (olimex_board_is_som204_evb()) {
+	} else if (olimex_board_is_som204_evb() || olimex_board_is_som_evb()) {
 		tx_delay = 4;
 	}
 
