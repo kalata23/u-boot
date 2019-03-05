@@ -131,9 +131,6 @@ struct sun4i_usb_phy_info {
 #endif
 		.gpio_vbus_det = NULL,
 		.gpio_id_det = NULL,
-#ifdef CONFIG_MACH_SUN6I
-		.rst_mask = (CCM_USB_CTRL_PHY3_RST | CCM_USB_CTRL_PHY3_CLK),
-#endif
 	},
 };
 
@@ -314,8 +311,7 @@ static int sun4i_usb_phy_init(struct phy *phy)
 				    data->cfg->disc_thresh, PHY_DISCON_TH_LEN);
 	}
 
-	if (usb_phy->id != 0)
-		sun4i_usb_phy_passby(phy, true);
+	sun4i_usb_phy_passby(phy, true);
 
 	sun4i_usb_phy0_reroute(data, true);
 
@@ -488,9 +484,9 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 
 		phy->id = i;
 		phy->rst_mask = info->rst_mask;
+		if ((data->cfg->type == sun8i_h3_phy) && (phy->id == 3))
+			phy->rst_mask = (BIT(3) | BIT(11));
 	};
-
-	setbits_le32(&data->ccm->usb_clk_cfg, CCM_USB_CTRL_PHYGATE);
 
 	debug("Allwinner Sun4I USB PHY driver loaded\n");
 	return 0;
