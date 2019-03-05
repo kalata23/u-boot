@@ -18,8 +18,6 @@
 #define CONFIG_USB_EHCI_SUNXI
 #endif
 
-#define CONFIG_SUNXI_USB_PHYS   3
-
 #define CONFIG_ARMV7_SECURE_BASE        SUNXI_SRAM_B_BASE
 #define CONFIG_ARMV7_SECURE_MAX_SIZE    (64 * 1024) /* 64 KB */
 
@@ -87,7 +85,6 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#define CONFIG_NR_DRAM_BANKS		1
 #define PHYS_SDRAM_0			CONFIG_SYS_SDRAM_BASE
 #define PHYS_SDRAM_0_SIZE		0x80000000 /* 2 GiB */
 
@@ -205,8 +202,6 @@
 #ifdef CONFIG_NAND_SUNXI
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_SYS_MAX_NAND_DEVICE 1
-#define CONFIG_MTD_PARTITIONS
-#define CONFIG_MTD_DEVICE
 
 #define NAND_MTDIDS "nand0=nand.0"
 #define NAND_MTDPARTS "mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs)"
@@ -227,8 +222,6 @@
 #ifdef CONFIG_USB_KEYBOARD
 #define CONFIG_PREBOOT
 #endif
-
-#define CONFIG_MISC_INIT_R
 
 #ifndef CONFIG_SPL_BUILD
 

@@ -15,7 +15,6 @@
 #include <netdev.h>
 #include <miiphy.h>
 #include <nand.h>
-#include <crc.h>
 #include <mmc.h>
 #include <spl.h>
 #include <cli.h>
