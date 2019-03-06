@@ -344,6 +344,23 @@ config TARGET_A33_OLINUXINO
 endchoice
 endif
 
+if MACH_SUN50I
+choice
+	prompt "SUNXI profile select"
+
+config TARGET_SUN50I_DEFAULT
+	bool "Default sunxi target"
+	---help---
+	Use the default profile for sunxi boards
+
+config TARGET_A64_OLINUXINO
+	bool "A64-OLinuXino board"
+	---help---
+	Use A64-OLinuXino board
+
+endchoice
+endif
+
 # The sun8i SoCs share a lot, this helps to avoid a lot of "if A23 || A33"
 config MACH_SUN8I
 	bool
@@ -582,6 +599,10 @@ if TARGET_A33_OLINUXINO
 	source "board/olimex/a33_olinuxino/Kconfig"
 endif
 
+if TARGET_A64_OLINUXINO
+	source "board/olimex/a64_olinuxino/Kconfig"
+endif
+
 config SYS_SOC
 	default "sunxi"
 
@@ -603,7 +624,7 @@ config OLD_SUNXI_KERNEL_COMPAT
 	Set this to enable various workarounds for old kernels, this results in
 	sub-optimal settings for newer kernels, only enable if needed.
 
-if !TARGET_A20_OLINUXINO && !TARGET_A33_OLINUXINO
+if !TARGET_A20_OLINUXINO && !TARGET_A33_OLINUXINO && !TARGET_A64_OLINUXINO
 config MACPWR
 	string "MAC power pin"
 	default ""
@@ -675,7 +696,7 @@ config INITIAL_USB_SCAN_DELAY
 	option to a non 0 value to add an extra delay before the first usb
 	bus scan.
 
-if !TARGET_A20_OLINUXINO && !TARGET_A33_OLINUXINO
+if !TARGET_A20_OLINUXINO && !TARGET_A33_OLINUXINO && !TARGET_A64_OLINUXINO
 config USB0_VBUS_PIN
 	string "Vbus enable pin for usb0 (otg)"
 	default ""
@@ -723,6 +744,7 @@ endif
 config I2C0_ENABLE
 	bool "Enable I2C/TWI controller 0"
 	default y if VIDEO_LCD_PANEL_OLINUXINO && TARGET_A33_OLINUXINO
+	default y if VIDEO_LCD_PANEL_OLINUXINO && TARGET_A64_OLINUXINO
 	default y if MACH_SUN4I || MACH_SUN5I || MACH_SUN7I || MACH_SUN8I_R40
 	default n if MACH_SUN6I || MACH_SUN8I
 	select CMD_I2C

@@ -243,6 +243,8 @@ const char *olimex_get_board_name()
 	return "";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "A33-OLinuXino-n8GB";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+	return "A64-OLinuXino-1G";		// TODO: Make some detection
 #endif
 }
 
@@ -259,6 +261,8 @@ const char *olimex_get_board_fdt()
 	return "";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "sun8i-a33-olinuxino.dtb";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+	return "allwinner/sun50i-a64-olinuxino-1Gs16M.dtb";	//TODO: Make some detection
 #endif
 }
 
@@ -409,6 +413,8 @@ const char * olimex_get_lcd_pwr_pin()
 		return "PH8";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 		return "PB2";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+		return "PD23";
 #endif
 }
 
@@ -418,6 +424,8 @@ const char * olimex_get_lcd_pwm_pin()
 	return "PB2";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "PH0";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+	return "PD22";
 #endif
 }
 
@@ -434,6 +442,8 @@ const char *olimex_get_lcd_irq_pin()
 		return "PH12";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "PB5";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+	return "PH7";
 #endif
 }
 
@@ -450,6 +460,8 @@ const char *olimex_get_lcd_rst_pin()
 		return "PB13";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "PB6";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+	return "PH8";
 #endif
 }
 
@@ -469,6 +481,8 @@ const char *olimex_get_usb_vbus_pin(uint8_t port)
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	case 0:
 		return "AXP0-VBUS-ENABLE";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+		return NULL;	// Driven by AXP803
 #endif
 	default:
 		return NULL;
@@ -482,6 +496,8 @@ const char *olimex_get_usb_vbus_det_pin()
 	return "PH5";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "AXP0-VBUS-DETECT";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+	return "PH6";
 #endif
 }
 
@@ -491,5 +507,7 @@ const char *olimex_get_usb_id_pin()
 	return "PH4";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "PB3";
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+	return "PH9";
 #endif
 }

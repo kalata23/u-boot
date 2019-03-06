@@ -63,6 +63,12 @@ static int sunxi_mmc_getcd_gpio(int sdc_no)
 	case 2:
 	case 3:
 		return -1;
+#elif defined(CONFIG_TARGET_A64_OLINUXINO)
+	case 0: return sunxi_name_to_gpio("PF6");
+	case 1:
+	case 2:
+	case 3:
+		return -1;
 #else
 	case 0: return sunxi_name_to_gpio(CONFIG_MMC0_CD_PIN);
 	case 1: return sunxi_name_to_gpio(CONFIG_MMC1_CD_PIN);
@@ -705,6 +711,14 @@ static const struct udevice_id sunxi_mmc_ids[] = {
 	},
 	{
 	  .compatible = "allwinner,sun7i-a20-mmc",
+	  .data = (ulong)&sun4i_a10_variant,
+	},
+	{
+	  .compatible = "allwinner,sun50i-a64-mmc",
+	  .data = (ulong)&sun4i_a10_variant,
+	},
+	{
+	  .compatible = "allwinner,sun50i-a64-emmc",
 	  .data = (ulong)&sun4i_a10_variant,
 	},
 	{ /* sentinel */ }

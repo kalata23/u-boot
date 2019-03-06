@@ -1,25 +1,31 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2018 Olimex Ltd.
- *   Author: Stefan Mavrodiev <stefan@olimex.com>
+ * (C) Copyright 2012-2012 Henrik Nordstrom <henrik@henriknordstrom.net>
  *
- * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+ * (C) Copyright 2007-2011
+ * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
+ * Tom Cubie <tangliang@allwinnertech.com>
+ *
+ * Configuration settings for the Allwinner sunxi series of boards.
  */
-#ifndef __A20_OLINUXINO_CONFIG_H
-#define __A20_OLINUXINO_CONFIG_H
+
+#ifndef __A64_OLINUXINO_CONFIG_H
+#define __A64_OLINUXINO_CONFIG_H
 
 #include <asm/arch/cpu.h>
 #include <linux/stringify.h>
 
 /*
- * A20 specific configuration
+ * A64 specific configuration
  */
+
 #ifdef CONFIG_USB_EHCI_HCD
 #define CONFIG_USB_EHCI_SUNXI
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 1
 #endif
 
-#define CONFIG_ARMV7_SECURE_BASE        SUNXI_SRAM_B_BASE
-#define CONFIG_ARMV7_SECURE_MAX_SIZE    (64 * 1024) /* 64 KB */
-
+#define GICD_BASE		0x3021000
+#define GICC_BASE		0x3022000
 
 #ifdef CONFIG_OLD_SUNXI_KERNEL_COMPAT
 /*
@@ -37,6 +43,10 @@
 # define CONFIG_MACH_TYPE_COMPAT_REV	1
 #endif
 
+#define CONFIG_BUILD_TARGET "u-boot.itb"
+#define CONFIG_SYS_BOOTM_LEN		(32 << 20)
+
+
 /* Serial & console */
 #define CONFIG_SYS_NS16550_SERIAL
 /* ns16550 reg in the low bits of cpu reg */
@@ -53,9 +63,17 @@
 /* CPU */
 #define COUNTER_FREQUENCY		24000000
 
+/*
+ * The DRAM Base differs between some models. We cannot use macros for the
+ * CONFIG_FOO defines which contain the DRAM base address since they end
+ * up unexpanded in include/autoconf.mk .
+ *
+ * So we have to have this #ifdef #else #endif block for these.
+ */
 #define SDRAM_OFFSET(x) 0x4##x
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 #define CONFIG_SYS_LOAD_ADDR		0x42000000 /* default load address */
+/* V3s do not have enough memory to place code at 0x4a000000 */
 /* Note SPL_STACK_R_ADDR is set through Kconfig, we include it here
  * since it needs to fit in with the other values. By also #defining it
  * we get warnings if the Kconfig value mismatches. */
@@ -64,20 +82,19 @@
 
 #define CONFIG_SPL_BSS_MAX_SIZE		0x00080000 /* 512 KiB */
 
-#ifdef CONFIG_SUNXI_HIGH_SRAM
 /*
  * The A80's A1 sram starts at 0x00010000 rather then at 0x00000000 and is
  * slightly bigger. Note that it is possible to map the first 32 KiB of the
  * A1 at 0x00000000 like with older SoCs by writing 0x16aa0001 to the
  * undocumented 0x008000e0 SYS_CTRL register. Where the 16aa is a key and
  * the 1 actually activates the mapping of the first 32 KiB to 0x00000000.
+ * A64 and H5 also has SRAM A1 at 0x00010000, but no magic remap register
+ * is known yet.
+ * H6 has SRAM A1 at 0x00020000.
  */
-#define CONFIG_SYS_INIT_RAM_ADDR	0x10000
-#define CONFIG_SYS_INIT_RAM_SIZE	0x08000	/* FIXME: 40 KiB ? */
-#else
-#define CONFIG_SYS_INIT_RAM_ADDR	0x0
-#define CONFIG_SYS_INIT_RAM_SIZE	0x8000	/* 32 KiB */
-#endif
+#define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SUNXI_SRAM_ADDRESS
+/* FIXME: this may be larger on some SoCs */
+#define CONFIG_SYS_INIT_RAM_SIZE	0x8000 /* 32 KiB */
 
 #define CONFIG_SYS_INIT_SP_OFFSET \
 	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
@@ -114,6 +131,12 @@
 #endif
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
+/*
+ * This is actually (CONFIG_ENV_OFFSET -
+ * (CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)), but the value will be used
+ * directly in a makefile, without the preprocessor expansion.
+ */
+#define CONFIG_BOARD_SIZE_LIMIT		0x7e000
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_MAX_DEVICE	4
 #endif
@@ -123,7 +146,6 @@
 #endif
 
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (64 << 20))
-
 /*
  * Miscellaneous configurable options
  */
@@ -137,17 +159,20 @@
 
 #define CONFIG_SYS_MONITOR_LEN		(768 << 10)	/* 768 KiB */
 
+#ifndef CONFIG_ARM64		/* AArch64 FEL support is not ready yet */
 #define CONFIG_SPL_BOARD_LOAD_IMAGE
+#endif
 
-#ifdef CONFIG_SUNXI_HIGH_SRAM
+/*
+ * We cannot use expressions here, because expressions won't be evaluated in
+ * autoconf.mk.
+ */
+
 #define CONFIG_SPL_TEXT_BASE		0x10060		/* sram start+header */
 #define CONFIG_SPL_MAX_SIZE		0x7fa0		/* 32 KiB */
-#define LOW_LEVEL_SRAM_STACK		0x00018000
-#else
-#define CONFIG_SPL_TEXT_BASE		0x60		/* sram start+header */
-#define CONFIG_SPL_MAX_SIZE		0x5fa0		/* 24KB on sun4i/sun7i */
-#define LOW_LEVEL_SRAM_STACK		0x00008000	/* End of sram */
-#endif
+
+/* end of SRAM A2 for now, as SRAM A1 is pretty tight for an ARM64 build */
+#define LOW_LEVEL_SRAM_STACK		0x00054000
 
 #define CONFIG_SPL_STACK		LOW_LEVEL_SRAM_STACK
 
@@ -162,10 +187,15 @@
 #define CONFIG_SYS_I2C_SLAVE		0x7f
 #endif
 
-
 #define CONFIG_SYS_SPD_BUS_NUM		0 /* The axp209 i2c bus is bus 0 */
 #define CONFIG_VIDEO_LCD_I2C_BUS	-1 /* NA, but necessary to compile */
-#define LCD_OLINUXINO_EEPROM_BUS	I2C_2
+#define LCD_OLINUXINO_EEPROM_BUS	I2C_0
+
+/* PMU */
+#if defined CONFIG_AXP152_POWER || defined CONFIG_AXP209_POWER || \
+    defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER || \
+    defined CONFIG_SY8106A_POWER
+#endif
 
 #ifdef CONFIG_REQUIRE_SERIAL_CONSOLE
 #define OF_STDOUT_PATH		"/soc@01c00000/serial@01c28000:115200"
@@ -191,34 +221,11 @@
 
 #endif /* CONFIG_VIDEO_SUNXI */
 
-/* Ethernet support */
-#define CONFIG_MII			/* MII PHY management		*/
-
 #ifdef CONFIG_USB_EHCI_HCD
 #define CONFIG_USB_OHCI_NEW
 #define CONFIG_USB_OHCI_SUNXI
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS 1
 #endif
-
-#ifdef CONFIG_NAND_SUNXI
-#define CONFIG_SYS_NAND_ONFI_DETECTION
-#define CONFIG_SYS_MAX_NAND_DEVICE 1
-
-#define NAND_MTDIDS "nand0=nand.0"
-#define NAND_MTDPARTS "mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs)"
-
-#define	BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
-	"bootcmd_nand=" \
-		"echo 'NAND booting is temporary disabled.'\0"
-
-#define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
-		"nand "
-
-#define BOOT_TARGET_DEVICES_NAND(func) func(NAND, nand, 0)
-#else
-#define BOOT_TARGET_DEVICES_NAND(func)
-#endif
-
 
 #ifdef CONFIG_USB_KEYBOARD
 #define CONFIG_PREBOOT
@@ -227,51 +234,37 @@
 #ifndef CONFIG_SPL_BUILD
 
 /*
- * 160M RAM (256M minimum minus 64MB heap + 32MB for u-boot, stack, fb, etc.
- * 32M uncompressed kernel, 16M compressed kernel, 1M fdt,
- * 1M script, 1M pxe and the ramdisk at the end.
+ * Boards seem to come with at least 512MB of DRAM.
+ * The kernel should go at 512K, which is the default text offset (that will
+ * be adjusted at runtime if needed).
+ * There is no compression for arm64 kernels (yet), so leave some space
+ * for really big kernels, say 256MB for now.
+ * Scripts, PXE and DTBs should go afterwards, leaving the rest for the initrd.
+ * Align the initrd to a 2MB page.
  */
-#define BOOTM_SIZE     __stringify(0xa000000)
-#define KERNEL_ADDR_R  __stringify(SDRAM_OFFSET(2000000))
-#define FDT_ADDR_R     __stringify(SDRAM_OFFSET(3000000))
-#define SCRIPT_ADDR_R  __stringify(SDRAM_OFFSET(3100000))
-#define RAMDISK_ADDR_R __stringify(SDRAM_OFFSET(3200000))
+#define BOOTM_SIZE	__stringify(0xa000000)
+#define KERNEL_ADDR_R	__stringify(SDRAM_OFFSET(0080000))
+#define FDT_ADDR_R	__stringify(SDRAM_OFFSET(FA00000))
+#define SCRIPT_ADDR_R	__stringify(SDRAM_OFFSET(FC00000))
+#define PXEFILE_ADDR_R	__stringify(SDRAM_OFFSET(FD00000))
+#define RAMDISK_ADDR_R	__stringify(SDRAM_OFFSET(FE00000))
 
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"bootm_size=" BOOTM_SIZE "\0" \
 	"kernel_addr_r=" KERNEL_ADDR_R "\0" \
 	"fdt_addr_r=" FDT_ADDR_R "\0" \
 	"scriptaddr=" SCRIPT_ADDR_R "\0" \
-	"ramdisk_addr_r=" RAMDISK_ADDR_R "\0" \
-	"fit_addr_r=0x50000000\0"
+	"pxefile_addr_r=" PXEFILE_ADDR_R "\0" \
+	"ramdisk_addr_r=" RAMDISK_ADDR_R "\0"
 
+#define DFU_ALT_INFO_RAM \
+	"dfu_alt_info_ram=" \
+	"kernel ram " KERNEL_ADDR_R " 0x1000000;" \
+	"fdt ram " FDT_ADDR_R " 0x100000;" \
+	"ramdisk ram " RAMDISK_ADDR_R " 0x4000000\0"
 
 #ifdef CONFIG_DFU
 #define CONFIG_SET_DFU_ALT_INFO
-
-#ifdef CONFIG_DFU_MMC
-#define DFU_ALT_INFO_MMC0 ""
-#define DFU_ALT_INFO_MMC2 ""
-#else
-#define DFU_ALT_INFO_MMC0 ""
-#define DFU_ALT_INFO_MMC2 ""
-#endif
-
-#ifdef CONFIG_DFU_NAND
-#define DFU_ALT_INFO_NAND \
-	"dfu_alt_info_nand=" \
-		"NAND.SPL raw 0x00000000 0x00400000;" \
-		"NAND.SPL.backup part 0 2;" \
-		"NAND.u-boot part 0 3;" \
-		"NAND.u-boot.backup part 0 4;" \
-		"NAND.u-boot-env part 0 5;" \
-		"NAND.u-boot-env.backup part 0 6;" \
-		"NAND.dtb part 0 7;" \
-		"NAND.kernel part 0 8;" \
-		"NAND.rootfs part 0 9\0"
-#else
-#define DFU_ALT_INFO_NAND ""
-#endif
 
 #ifdef CONFIG_DFU_RAM
 #define DFU_ALT_INFO_RAM \
@@ -294,10 +287,7 @@
 #endif
 
 #define DFU_ALT_INFO \
-	DFU_ALT_INFO_MMC0 \
-	DFU_ALT_INFO_MMC2 \
 	DFU_ALT_INFO_RAM \
-	DFU_ALT_INFO_NAND \
 	DFU_ALT_INFO_SF
 
 #endif /* CONFIG_DFU */
@@ -308,6 +298,7 @@
 #endif
 
 #ifdef CONFIG_MMC
+#if CONFIG_MMC_SUNXI_SLOT_EXTRA != -1
 #define BOOTENV_DEV_MMC_AUTO(devtypeu, devtypel, instance)		\
 	BOOTENV_DEV_MMC(MMC, mmc, 0)					\
 	BOOTENV_DEV_MMC(MMC, mmc, 1)					\
@@ -324,6 +315,9 @@
 	"mmc_auto "
 
 #define BOOT_TARGET_DEVICES_MMC(func) func(MMC_AUTO, mmc_auto, na)
+#else
+#define BOOT_TARGET_DEVICES_MMC(func) func(MMC, mmc, 0)
+#endif
 #else
 #define BOOT_TARGET_DEVICES_MMC(func)
 #endif
@@ -353,7 +347,6 @@
 #define BOOT_TARGET_DEVICES(func) \
 	func(FEL, fel, na) \
 	BOOT_TARGET_DEVICES_MMC(func) \
-	BOOT_TARGET_DEVICES_NAND(func) \
 	BOOT_TARGET_DEVICES_SCSI(func) \
 	BOOT_TARGET_DEVICES_USB(func) \
 	func(DHCP, dhcp, na)
@@ -383,7 +376,6 @@
 	"stdout=serial\0" \
 	"stderr=serial\0"
 #endif
-
 #define CONSOLE_ENV_SETTINGS \
 	CONSOLE_STDIN_SETTINGS \
 	CONSOLE_STDOUT_SETTINGS
@@ -399,6 +391,4 @@
 #define CONFIG_EXTRA_ENV_SETTINGS
 #endif
 
-#define CONFIG_MACH_TYPE	(4283 | ((CONFIG_MACH_TYPE_COMPAT_REV) << 28))
-
-#endif /* __A20_OLINUXINO_CONFIG_H */
+#endif /* __A64_OLINUXINO_CONFIG_H */

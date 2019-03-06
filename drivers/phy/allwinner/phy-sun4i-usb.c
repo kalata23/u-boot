@@ -94,7 +94,8 @@ struct sun4i_usb_phy_info {
 } phy_info[] = {
 	{
 #if !defined(CONFIG_TARGET_A20_OLINUXINO) && \
-    !defined(CONFIG_TARGET_A33_OLINUXINO)
+    !defined(CONFIG_TARGET_A33_OLINUXINO) && \
+    !defined(CONFIG_TARGET_A64_OLINUXINO)
 		.gpio_vbus = CONFIG_USB0_VBUS_PIN,
 		.gpio_vbus_det = CONFIG_USB0_VBUS_DET,
 		.gpio_id_det = CONFIG_USB0_ID_DET,
@@ -103,7 +104,8 @@ struct sun4i_usb_phy_info {
 	},
 	{
 #if !defined(CONFIG_TARGET_A20_OLINUXINO) && \
-    !defined(CONFIG_TARGET_A33_OLINUXINO)
+    !defined(CONFIG_TARGET_A33_OLINUXINO) && \
+    !defined(CONFIG_TARGET_A64_OLINUXINO)
 		.gpio_vbus = CONFIG_USB1_VBUS_PIN,
 #endif
 		.gpio_vbus_det = NULL,
@@ -112,7 +114,8 @@ struct sun4i_usb_phy_info {
 	},
 	{
 #if !defined(CONFIG_TARGET_A20_OLINUXINO) && \
-    !defined(CONFIG_TARGET_A33_OLINUXINO)
+    !defined(CONFIG_TARGET_A33_OLINUXINO) && \
+    !defined(CONFIG_TARGET_A64_OLINUXINO)
 		.gpio_vbus = CONFIG_USB2_VBUS_PIN,
 #endif
 		.gpio_vbus_det = NULL,
@@ -126,7 +129,8 @@ struct sun4i_usb_phy_info {
 	},
 	{
 #if !defined(CONFIG_TARGET_A20_OLINUXINO) && \
-    !defined(CONFIG_TARGET_A33_OLINUXINO)
+    !defined(CONFIG_TARGET_A33_OLINUXINO) && \
+    !defined(CONFIG_TARGET_A64_OLINUXINO)
 		.gpio_vbus = CONFIG_USB3_VBUS_PIN,
 #endif
 		.gpio_vbus_det = NULL,
@@ -431,7 +435,9 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 		struct sun4i_usb_phy_info *info = &phy_info[i];
 		char name[16];
 
-#if defined(CONFIG_TARGET_A20_OLINUXINO) || defined(CONFIG_TARGET_A33_OLINUXINO)
+#if defined(CONFIG_TARGET_A20_OLINUXINO) || \
+    defined(CONFIG_TARGET_A33_OLINUXINO) || \
+    defined(CONFIG_TARGET_A64_OLINUXINO)
 		phy->gpio_vbus = sunxi_name_to_gpio(olimex_get_usb_vbus_pin(i));
 #else
 		phy->gpio_vbus = sunxi_name_to_gpio(info->gpio_vbus);
@@ -445,7 +451,9 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 				return ret;
 		}
 
-#if defined(CONFIG_TARGET_A20_OLINUXINO) || defined(CONFIG_TARGET_A33_OLINUXINO)
+#if defined(CONFIG_TARGET_A20_OLINUXINO) || \
+    defined(CONFIG_TARGET_A33_OLINUXINO) || \
+    defined(CONFIG_TARGET_A64_OLINUXINO)
 		phy->gpio_vbus_det = (i == 0) ?
 			sunxi_name_to_gpio(olimex_get_usb_vbus_det_pin()) : -1;
 #else
@@ -459,7 +467,9 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 			if (ret)
 				return ret;
 		}
-#if defined(CONFIG_TARGET_A20_OLINUXINO) || defined(CONFIG_TARGET_A33_OLINUXINO)
+#if defined(CONFIG_TARGET_A20_OLINUXINO) || \
+    defined(CONFIG_TARGET_A33_OLINUXINO) || \
+    defined(CONFIG_TARGET_A64_OLINUXINO)
 		phy->gpio_id_det = (i == 0) ?
 			sunxi_name_to_gpio(olimex_get_usb_id_pin()) : -1;
 #else
