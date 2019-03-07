@@ -91,14 +91,30 @@ S:	Maintainted
 T:	git git://git.denx.de/u-boot-socfpga.git
 F:	arch/arm/mach-socfpga/
 
-ARM ATMEL AT91
-M:	Andreas Bießmann <andreas@biessmann.org>
+ARM AMLOGIC SOC SUPPORT
+M:	Neil Armstrong <narmstrong@baylibre.com>
 S:	Maintained
-T:	git git://git.denx.de/u-boot-atmel.git
-F:	arch/arm/mach-at91/
+L:	u-boot-amlogic@groups.io
+T:	git git://git.denx.de/u-boot-amlogic.git
+F:	arch/arm/mach-meson/
+F:	arch/arm/include/asm/arch-meson/
+F:	drivers/clk/clk_meson*
+F:	drivers/serial/serial_meson.c
+F:	drivers/reset/reset-meson.c
+F:	drivers/i2c/meson_i2c.c
+F:	drivers/net/phy/meson-gxl.c
+F:	drivers/adc/meson-saradc.c
+F:	drivers/phy/meson*
+F:	drivers/mmc/meson_gx_mmc.c
+F:	drivers/spi/meson_spifc.c
+F:	drivers/pinctrl/meson/
+F:	drivers/power/domain/meson-gx-pwrc-vpu.c
+F:	drivers/video/meson/
+F:	include/configs/meson64.h
+N:	meson
 
 ARM BROADCOM BCM283X
-M:	Alexander Graf <agraf@suse.de>
+M:	Matthias Brugger <mbrugger@suse.com>
 S:	Maintained
 F:	arch/arm/mach-bcm283x/
 F:	drivers/gpio/bcm2835_gpio.c
@@ -120,9 +136,17 @@ F:	doc/README.bcm7xxx
 F:	drivers/mmc/bcmstb_sdhci.c
 F:	drivers/spi/bcmstb_spi.c
 
+ARM/CZ.NIC TURRIS MOX SUPPORT
+M:	Marek Behun <marek.behun@nic.cz>
+S:	Maintained
+F:	arch/arm/dts/armada-3720-turris-mox.dts
+F:	board/CZ.NIC/
+F:	configs/turris_*_defconfig
+F:	include/configs/turris_*.h
+
 ARM FREESCALE IMX
 M:	Stefano Babic <sbabic@denx.de>
-M:	Fabio Estevam <fabio.estevam@nxp.com>
+M:	Fabio Estevam <festevam@gmail.com>
 R:	NXP i.MX U-Boot Team <uboot-imx@nxp.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-imx.git
@@ -176,9 +200,18 @@ F:	drivers/ram/mediatek/
 F:	drivers/spi/mtk_qspi.c
 F:	drivers/timer/mtk_timer.c
 F:	drivers/watchdog/mtk_wdt.c
+F:	drivers/net/mtk_eth.c
+F:	drivers/reset/reset-mediatek.c
 F:	tools/mtk_image.c
 F:	tools/mtk_image.h
 N:	mediatek
+
+ARM MICROCHIP/ATMEL AT91
+M:	Eugen Hristev <eugen.hristev@microchip.com>
+S:	Maintained
+T:	git git://git.denx.de/u-boot-atmel.git
+F:	arch/arm/mach-at91/
+F:	board/atmel/
 
 ARM OWL
 M:	Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
@@ -257,7 +290,7 @@ M:	Christophe Kerello <christophe.kerello@st.com>
 M:	Patrice Chotard <patrice.chotard@st.com>
 L:	uboot-stm32@st-md-mailman.stormreply.com (moderated for non-subscribers)
 S:	Maintained
-F:	arch/arm/mach-stm32mp
+F:	arch/arm/mach-stm32mp/
 F:	drivers/clk/clk_stm32mp1.c
 F:	drivers/i2c/stm32f7_i2c.c
 F:	drivers/misc/stm32mp_fuse.c
@@ -352,7 +385,7 @@ ARM ZYNQMP
 M:	Michal Simek <michal.simek@xilinx.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-microblaze.git
-F:	arch/arm/cpu/armv8/zynqmp/
+F:	arch/arm/mach-zynqmp/
 F:	drivers/clk/clk_zynqmp.c
 F:	drivers/fpga/zynqpl.c
 F:	drivers/gpio/zynq_gpio.c
@@ -420,8 +453,8 @@ F:	include/dm/
 F:	test/dm/
 
 EFI PAYLOAD
-M:	Alexander Graf <agraf@suse.de>
-R:	Heinrich Schuchardt <xypron.glpk@gmx.de>
+M:	Heinrich Schuchardt <xypron.glpk@gmx.de>
+R:	Alexander Graf <agraf@csgraf.de>
 S:	Maintained
 T:	git git://github.com/agraf/u-boot.git
 F:	doc/README.uefi
@@ -438,6 +471,8 @@ F:	lib/efi*/
 F:	test/py/tests/test_efi*
 F:	test/unicode_ut.c
 F:	cmd/bootefi.c
+F:	cmd/efidebug.c
+F:	cmd/nvedit_efi.c
 F:	tools/file2include.c
 
 FPGA
@@ -465,7 +500,7 @@ S:	Maintained
 T:	git git://git.denx.de/u-boot-freebsd.git
 
 FREESCALE QORIQ
-M:	York Sun <york.sun@nxp.com>
+M:	Prabhakar Kushwaha <prabhakar.kushwaha@nxp.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-fsl-qoriq.git
 
@@ -521,9 +556,15 @@ F:	arch/mips/mach-mscc/
 F:	arch/mips/dts/luton*
 F:	arch/mips/dts/mscc*
 F:	arch/mips/dts/ocelot*
+F:	arch/mips/dts/jr2*
+F:	arch/mips/dts/serval*
 F:	board/mscc/
 F:	configs/mscc*
+F:	drivers/gpio/mscc_sgpio.c
+F:	drivers/spi/mscc_bb_spi.c
 F:	include/configs/vcoreiii.h
+F:	drivers/pinctrl/mscc/
+F:	drivers/net/mscc_eswitch/
 
 MIPS JZ4780
 M:	Ezequiel Garcia <ezequiel@collabora.com>
@@ -608,13 +649,13 @@ F:	arch/powerpc/cpu/mpc83xx/
 F:	arch/powerpc/include/asm/arch-mpc83xx/
 
 POWERPC MPC85XX
-M:	York Sun <york.sun@nxp.com>
+M:	Prabhakar Kushwaha <prabhakar.kushwaha@nxp.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-mpc85xx.git
 F:	arch/powerpc/cpu/mpc85xx/
 
 POWERPC MPC86XX
-M:	York Sun <york.sun@nxp.com>
+M:	Prabhakar Kushwaha <prabhakar.kushwaha@nxp.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-mpc86xx.git
 F:	arch/powerpc/cpu/mpc86xx/
@@ -648,9 +689,17 @@ SPI
 M:	Jagan Teki <jagan@openedev.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-spi.git
-F:	drivers/mtd/spi/
 F:	drivers/spi/
 F:	include/spi*
+
+SPI-NOR
+M:	Jagan Teki <jagan@openedev.com>
+M:	Vignesh R <vigneshr@ti.com>
+S:	Maintained
+F:	drivers/mtd/spi/
+F:	include/spi_flash.h
+F:	include/linux/mtd/cfi.h
+F:	include/linux/mtd/spi-nor.h
 
 SPMI
 M:	Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
@@ -673,7 +722,9 @@ F:	configs/am335x_hs_evm_defconfig
 F:	configs/am335x_hs_evm_uart_defconfig
 F:	configs/am43xx_hs_evm_defconfig
 F:	configs/am57xx_hs_evm_defconfig
+F:	configs/am57xx_hs_evm_usb_defconfig
 F:	configs/dra7xx_hs_evm_defconfig
+F:	configs/dra7xx_hs_evm_usb_defconfig
 F:	configs/k2hk_hs_evm_defconfig
 F:	configs/k2e_hs_evm_defconfig
 F:	configs/k2g_hs_evm_defconfig

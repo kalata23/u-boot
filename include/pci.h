@@ -735,12 +735,6 @@ extern pci_dev_t pci_find_device (unsigned int vendor, unsigned int device, int 
 extern pci_dev_t pci_find_devices (struct pci_device_id *ids, int index);
 pci_dev_t pci_find_class(unsigned int find_class, int index);
 
-extern int pci_hose_config_device(struct pci_controller *hose,
-				  pci_dev_t dev,
-				  unsigned long io,
-				  pci_addr_t mem,
-				  unsigned long command);
-
 extern int pci_hose_find_capability(struct pci_controller *hose, pci_dev_t dev,
 				    int cap);
 extern int pci_hose_find_cap_start(struct pci_controller *hose, pci_dev_t dev,
@@ -828,7 +822,7 @@ struct udevice;
  *
  * Every device on a PCI bus has this per-child data.
  *
- * It can be accessed using dev_get_parent_priv(dev) if dev->parent is a
+ * It can be accessed using dev_get_parent_platdata(dev) if dev->parent is a
  * PCI bus (i.e. UCLASS_PCI)
  *
  * @devfn:	Encoded device and function index - see PCI_DEVFN()
@@ -1559,6 +1553,16 @@ struct dm_pci_emul_ops {
  */
 int sandbox_pci_get_emul(struct udevice *bus, pci_dev_t find_devfn,
 			 struct udevice **containerp, struct udevice **emulp);
+
+/**
+ * pci_get_devfn() - Extract the devfn from fdt_pci_addr of the device
+ *
+ * Get devfn from fdt_pci_addr of the specifified device
+ *
+ * @dev:	PCI device
+ * @return devfn in bits 15...8 if found, -ENODEV if not found
+ */
+int pci_get_devfn(struct udevice *dev);
 
 #endif /* CONFIG_DM_PCI */
 

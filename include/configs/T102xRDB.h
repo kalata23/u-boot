@@ -236,7 +236,6 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
 #define CONFIG_DIMM_SLOTS_PER_CTLR	1
 #define CONFIG_CHIP_SELECTS_PER_CTRL	(4 * CONFIG_DIMM_SLOTS_PER_CTLR)
-#define CONFIG_FSL_DDR_INTERACTIVE
 #if defined(CONFIG_TARGET_T1024RDB)
 #define CONFIG_DDR_SPD
 #define CONFIG_SYS_SPD_BUS_NUM	0
@@ -498,7 +497,6 @@ unsigned long get_board_ddr_clk(void);
 /*
  * eSPI - Enhanced SPI
  */
-#define CONFIG_SPI_FLASH_BAR
 #define CONFIG_SF_DEFAULT_SPEED	10000000
 #define CONFIG_SF_DEFAULT_MODE	0
 
