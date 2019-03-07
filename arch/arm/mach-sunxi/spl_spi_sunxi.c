@@ -307,5 +307,41 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 
 	return ret;
 }
+
+uint32_t sunxi_spi_is_present(void)
+{
+	u8 jedec_id[3];
+	spi0_init();
+
+
+
+	writel(4, SUN6I_SPI0_MBC);	/* Burst counter (total bytes) */
+	writel(1, SUN6I_SPI0_MTC);	/* Transfer counter (bytes to send) */
+	writel(1, SUN6I_SPI0_BCC);	/* SUN6I also needs this */
+
+	/* Send the JEDEC ID (9Fh) command header */
+	writeb(0x9F, SUN6I_SPI0_TXD);
+
+	/* Start the data transfer */
+	setbits_le32(SUN6I_SPI0_TCR, SUN6I_TCR_XCH);
+
+	/* Wait until everything is received in the RX FIFO */
+	while ((readl(SUN6I_SPI0_FIFO_STA) & 0x7F) < 4);
+
+	/* Read the data */
+	readb(SUN6I_SPI0_RXD);
+	jedec_id[0] = readb(SUN6I_SPI0_RXD);
+	jedec_id[1] = readb(SUN6I_SPI0_RXD);
+	jedec_id[2] = readb(SUN6I_SPI0_RXD);
+
+	spi0_deinit();
+
+	/* If data is not null, there is some JEDEC chip */
+	if (jedec_id[0] || jedec_id[1] || jedec_id[2])
+		return 1;
+
+	return 0;
+}
+
 /* Use priorty 0 to override the default if it happens to be linked in */
 SPL_LOAD_IMAGE_METHOD("sunxi SPI", 0, BOOT_DEVICE_SPI, spl_spi_load_image);

@@ -33,6 +33,12 @@
 #include <dm/uclass-internal.h>
 #include <dm/device-internal.h>
 
+#ifdef CONFIG_FDT_FIXUP_PARTITIONS
+#include <jffs2/load_kernel.h>
+#include <mtd_node.h>
+#endif
+
+#include "../common/board_detect.h"
 #include "../common/boards.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -191,8 +197,6 @@ static void mmc_pinmux_setup(int sdc)
 {
 	unsigned int pin;
 
-	printf("%s(): %d\n", __func__, __LINE__);
-
 	switch (sdc) {
 	case 0:
 		/* SDC0: PF0-PF5 */
@@ -203,18 +207,16 @@ static void mmc_pinmux_setup(int sdc)
 		break;
 
 	case 2:
-		/* SDC2: PC6-PC11 */
-		for (pin = SUNXI_GPC(6); pin <= SUNXI_GPC(11); pin++) {
+		/* SDC2: PC5-PC6, PC8-PC16 */
+		for (pin = SUNXI_GPC(5); pin <= SUNXI_GPC(6); pin++) {
 			sunxi_gpio_set_cfgpin(pin, SUNXI_GPC_SDC2);
 			sunxi_gpio_set_pull(pin, SUNXI_GPIO_PULL_UP);
 			sunxi_gpio_set_drv(pin, 2);
 		}
-		break;
 
-	case 3:
-		/* SDC3: PI4-PI9 */
-		for (pin = SUNXI_GPI(4); pin <= SUNXI_GPI(9); pin++) {
-			sunxi_gpio_set_cfgpin(pin, SUNXI_GPI_SDC3);
+		for (pin = SUNXI_GPC(8); pin <= SUNXI_GPC(16); pin++) {
+			sunxi_gpio_set_cfgpin(pin, SUNXI_GPC_SDC2);
+			sunxi_gpio_set_pull(pin, SUNXI_GPIO_PULL_UP);
 			sunxi_gpio_set_drv(pin, 2);
 		}
 		break;
@@ -228,8 +230,6 @@ int board_mmc_init(bd_t *bis)
 {
 	struct mmc *mmc;
 
-	printf("%s(): %d\n", __func__, __LINE__);
-
 	/* Try to initialize MMC0 */
 	mmc_pinmux_setup(0);
 	mmc = sunxi_mmc_init(0);
@@ -238,8 +238,10 @@ int board_mmc_init(bd_t *bis)
 		return -1;
 	}
 
+	if (eeprom->config.storage != 'e')
+		return 0;
+
 	/* Initialize MMC2 on boards with eMMC */
-	// TODO: Fix me
 	mmc_pinmux_setup(2);
 	mmc = sunxi_mmc_init(2);
 	if (!mmc) {
@@ -266,20 +268,6 @@ int mmc_get_env_dev(void)
 
 #endif /* CONFIG_MMC */
 
-#ifdef CONFIG_BOARD_EARLY_INIT_R
-int board_early_init_r(void)
-{
-	printf("%s(): %d\n", __func__, __LINE__);
-#ifdef CONFIG_MMC
-	printf("%s(): %d\n", __func__, __LINE__);
-	mmc_pinmux_setup(0);
-
-	mmc_pinmux_setup(2);
-#endif
-	return 0;
-}
-#endif /* CONFIG_BOARD_EARLY_INIT_R */
-
 static void sunxi_spl_store_dram_size(phys_addr_t dram_size)
 {
 	struct boot_file_head *spl = get_spl_header(SPL_DT_HEADER_VERSION);
@@ -294,24 +282,8 @@ static void sunxi_spl_store_dram_size(phys_addr_t dram_size)
 	spl->dram_size = dram_size >> 20;
 }
 
-static int sunxi_gpio_input(u32 pin)
-{
-	u32 dat;
-	u32 bank = GPIO_BANK(pin);
-	u32 num = GPIO_NUM(pin);
-	struct sunxi_gpio *pio = BANK_TO_GPIO(bank);
-
-
-	dat = readl(&pio->dat);
-	dat >>= num;
-
-	return dat & 0x1;
-}
-
-
 void sunxi_board_init(void)
 {
-	printf("%s(): %d\n", __func__, __LINE__);
 	printf("DRAM:");
 	gd->ram_size = sunxi_dram_init();
 	printf(" %d MiB\n", (int)(gd->ram_size >> 20));
@@ -319,52 +291,45 @@ void sunxi_board_init(void)
 		hang();
 
 	sunxi_spl_store_dram_size(gd->ram_size);
-
-	/**
-	 * Try some detection:
-	 *
-	 * 1. If RAM > 1G, then A64-OLinuXino-2Ge8G-IND
-	 */
-
-	sunxi_gpio_set_cfgpin(SUNXI_GPC(3), SUNXI_GPIO_INPUT);
-	sunxi_gpio_set_pull(SUNXI_GPC(3), SUNXI_GPIO_PULL_DOWN);
-	udelay(100 * 1000);
-	printf("PC3: %d\n", sunxi_gpio_input(SUNXI_GPC(3)));
-
-
-
 }
 
 #if defined(CONFIG_SPL_BOARD_INIT)
 void spl_board_init(void)
 {
-	printf("%s(): %d\n", __func__, __LINE__);
+	struct mmc *mmc = NULL;
 
-	//TODO: Try somehow to populate eeprom
-#if 0
-	uint32_t bootdev;
+	/* Make sure ram is empty */
+	memset((void *)eeprom, 0xFF, 256);
 
-
-	/* First try loading from EEPROM */
-	printf("EEPROM: ");
-	if (olimex_i2c_eeprom_read()) {
-		printf("Error\n");
-
-		/* If booted from eMMC/MMC try loading configuration */
-		bootdev = spl_boot_device();
-		if (bootdev != BOOT_DEVICE_MMC1 && bootdev != BOOT_DEVICE_MMC2)
-			return;
-		printf("MMC:    ");
-		if (olimex_mmc_eeprom_read()) {
-			printf("Error\n");
-			return;
-		}
+	/**
+	 * Try some detection:
+	 *
+	 * 1. If RAM > 1G, then A64-OLinuXino-2Ge8G-IND
+	 * 2. If SPI is present, then A64-OLinuXino-1Gs16M
+	 * 3. If eMMC is present, then A64-OLinuXino-1Ge4GW
+	 * 4. Else -> A64-OLinuXino-1G
+	 */
+	if ((int)(gd->ram_size >> 20) > 1024) {
+		eeprom->id = 8861;
+		eeprom->config.storage = 'e';
+		return;
 	}
-	printf("Ready\n");
 
-	/* Check if content is valid */
-	printf("Config: %s\n", olimex_eeprom_is_valid() ? "Valid" : "Corrupted");
-#endif
+	if (sunxi_spi_is_present()) {
+		eeprom->id = 9065;
+		eeprom->config.storage = 's';
+		return;
+	}
+
+	mmc_initialize(NULL);
+	mmc = find_mmc_device(1);
+	if (!mmc_init(mmc)) {
+		eeprom->id = 8367;
+		eeprom->config.storage = 'e';
+		return;
+	}
+
+	eeprom->id = 8857;
 }
 #endif
 
@@ -373,33 +338,8 @@ void spl_board_init(void)
 #ifdef CONFIG_USB_GADGET
 int g_dnl_board_usb_cable_connected(void)
 {
-	struct udevice *dev;
-	struct phy phy;
-	int ret;
-
-	ret = uclass_get_device(UCLASS_USB_DEV_GENERIC, 0, &dev);
-	if (ret) {
-		pr_err("%s: Cannot find USB device\n", __func__);
-		return ret;
-	}
-
-	ret = generic_phy_get_by_name(dev, "usb", &phy);
-	if (ret) {
-		pr_err("failed to get %s USB PHY\n", dev->name);
-		return ret;
-	}
-
-	ret = generic_phy_init(&phy);
-	if (ret) {
-		pr_err("failed to init %s USB PHY\n", dev->name);
-		return ret;
-	}
-
-	return sun4i_usb_phy_vbus_detect(&phy);
-	if (ret == 1)
-		return -ENODEV;
-
-	return ret;
+	/* This is workaround. Must be fixed in the future */
+	return 1;
 }
 #endif /* CONFIG_USB_GADGET */
 
@@ -457,6 +397,7 @@ static void parse_spl_header(const uint32_t spl_addr)
 static void setup_environment(const void *fdt)
 {
 	char serial_string[17] = { 0 };
+	char fdtfile[64];
 	unsigned int sid[4];
 	uint8_t mac_addr[6];
 	char ethaddr[16];
@@ -502,7 +443,8 @@ static void setup_environment(const void *fdt)
 		}
 	}
 
-	env_set("fdtfile", olimex_get_board_fdt());
+	sprintf(fdtfile, "allwinner/%s", olimex_get_board_fdt());
+	env_set("fdtfile", fdtfile);
 
 }
 
@@ -570,86 +512,10 @@ int ft_board_setup(void *blob, bd_t *bd)
 
 int show_board_info(void)
 {
-	return 0;
-#if 0
-	const char *name;
-	char *mac = eeprom->mac;
-	uint8_t i;
-
-	if (!olimex_eeprom_is_valid()) {
-		printf("Model: Unknown\n");
-		return 0;
-	}
-
-	/**
-	 * In case of lowercase revision number, rewrite eeprom
-	 */
-	if (eeprom->revision.major >= 'a' && eeprom->revision.major <= 'z') {
-		eeprom->revision.major -= 0x20;
-
-		olimex_i2c_eeprom_write();
-	}
-
-	/* Get board name and compare if with eeprom content */
-	name = olimex_get_board_name();
-
-	printf("Model: %s Rev.%c%c", name,
-	       (eeprom->revision.major < 'A' || eeprom->revision.major > 'Z') ?
-	       0 : eeprom->revision.major,
-	       (eeprom->revision.minor < '1' || eeprom->revision.minor > '9') ?
-	       0 : eeprom->revision.minor);
-
-	printf("\nSerial:%08X\n", eeprom->serial);
-	printf("MAC:   ");
-	for (i = 0; i < 12; i += 2 ) {
-		if (i < 10)
-			printf("%c%c:",
-				(mac[i] == 0xFF) ? 'F' : mac[i],
-				(mac[i+1] == 0xFF) ? 'F' : mac[i+1]);
-		else
-			printf("%c%c\n",
-				(mac[i] == 0xFF) ? 'F' : mac[i],
-				(mac[i+1] == 0xFF) ? 'F' : mac[i+1]);
-	}
+	printf("Model: %s\n", olimex_get_board_name());
 
 	return 0;
-#endif
 }
-
-//
-// int board_fit_config_name_match(const char *name)
-// {
-// 	const char *dtb;
-//
-// 	printf("%s(): name: %s\n", name);
-//
-// 	dtb = olimex_get_board_fdt();
-// 	return (!strncmp(name, dtb, strlen(dtb) - 4)) ? 0 : -1;
-// }
-// #endif /* CONFIG_MULTI_DTB_FIT */
-
-// #if defined(CONFIG_SPL_LOAD_FIT) || defined(CONFIG_MULTI_DTB_FIT)
-// int board_fit_config_name_match(const char *name)
-// {
-// 	struct boot_file_head *spl = get_spl_header(SPL_DT_HEADER_VERSION);
-// 	const char *cmp_str = (const char *)spl;
-//
-// 	printf("%s(): name: %s\n", __func__, name);
-//
-// 	/* Check if there is a DT name stored in the SPL header and use that. */
-// 	if (spl != INVALID_SPL_HEADER && spl->dt_name_offset) {
-// 		cmp_str += spl->dt_name_offset;
-// 	} else {
-// #ifdef CONFIG_DEFAULT_DEVICE_TREE
-// 		cmp_str = CONFIG_DEFAULT_DEVICE_TREE;
-// #else
-// 		return 0;
-// #endif
-// 	};
-//
-// 	return strcmp(name, cmp_str);
-// }
-// #endif
 
 #ifdef CONFIG_SET_DFU_ALT_INFO
 void set_dfu_alt_info(char *interface, char *devstr)
@@ -678,22 +544,27 @@ void set_dfu_alt_info(char *interface, char *devstr)
 #if defined(CONFIG_SPL_LOAD_FIT) || defined(CONFIG_MULTI_DTB_FIT)
 int board_fit_config_name_match(const char *name)
 {
-	struct boot_file_head *spl = get_spl_header(SPL_DT_HEADER_VERSION);
-	const char *cmp_str = (const char *)spl;
+	const char *dtb;
 
-	printf("%s(): name: %s\n", __func__, name);
-
-	/* Check if there is a DT name stored in the SPL header and use that. */
-	if (spl != INVALID_SPL_HEADER && spl->dt_name_offset) {
-		cmp_str += spl->dt_name_offset;
-	} else {
-#ifdef CONFIG_DEFAULT_DEVICE_TREE
-		cmp_str = CONFIG_DEFAULT_DEVICE_TREE;
-#else
-		return 0;
+	dtb = olimex_get_board_fdt();
+	return (!strncmp(name, dtb, strlen(dtb) - 4)) ? 0 : -1;
+}
 #endif
-	};
 
-	return strcmp(name, cmp_str);
+#ifdef CONFIG_FDT_FIXUP_PARTITIONS
+struct node_info nodes[] = {
+	{ "jedec,spi-nor", MTD_DEV_TYPE_NOR, },
+};
+#endif
+
+#if defined(CONFIG_OF_SYSTEM_SETUP)
+int ft_system_setup(void *blob, bd_t *bd)
+{
+#ifdef CONFIG_FDT_FIXUP_PARTITIONS
+	if (eeprom->config.storage == 's')
+		fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
+#endif
+
+	return 0;
 }
 #endif

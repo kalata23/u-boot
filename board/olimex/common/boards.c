@@ -8,7 +8,6 @@
 #include "board_detect.h"
 #include "boards.h"
 
-#ifndef CONFIG_SPL_BUILD
 struct olinuxino_boards olinuxino_boards[] = {
 #if defined(CONFIG_TARGET_A20_OLINUXINO)
 	/* A20-OLinuXino-Lime */
@@ -223,6 +222,24 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(1), COM)
 	},
 #endif
+#if CONFIG_TARGET_A64_OLINUXINO
+	{
+		OLINUXINO_BOARD(8861, "A64-OLinuXino-2Ge8G-IND", "sun50i-a64-olinuxino-2Ge8G-IND.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(8), GBYTES(2), IND)
+	},
+	{
+		OLINUXINO_BOARD(9065, "A64-OLinuXino-1Gs16M", "sun50i-a64-olinuxino-1Gs16M.dtb")
+		OLINUXINO_CONFIG(SPI, MBYTES(16), GBYTES(1), COM)
+	},
+	{
+		OLINUXINO_BOARD(8367, "A64-OLinuXino-1Ge4GW", "sun50i-a64-olinuxino-1Ge4GW.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(4), GBYTES(2), COM)
+	},
+	{
+		OLINUXINO_BOARD(8857, "A64-OLinuXino-1G", "sun50i-a64-olinuxino-1G.dtb")
+		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), COM)
+	},
+#endif
 	/* END */
 	{
 		.id = 0
@@ -232,7 +249,7 @@ struct olinuxino_boards olinuxino_boards[] = {
 
 const char *olimex_get_board_name()
 {
-#if defined(CONFIG_TARGET_A20_OLINUXINO)
+#if defined(CONFIG_TARGET_A20_OLINUXINO) || defined(CONFIG_TARGET_A64_OLINUXINO)
 	struct olinuxino_boards *board = olinuxino_boards;
 
 	while (board->id) {
@@ -243,14 +260,12 @@ const char *olimex_get_board_name()
 	return "";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "A33-OLinuXino-n8GB";
-#elif defined(CONFIG_TARGET_A64_OLINUXINO)
-	return "A64-OLinuXino-1G";		// TODO: Make some detection
 #endif
 }
 
 const char *olimex_get_board_fdt()
 {
-#if defined(CONFIG_TARGET_A20_OLINUXINO)
+#if defined(CONFIG_TARGET_A20_OLINUXINO) || defined(CONFIG_TARGET_A64_OLINUXINO)
 	struct olinuxino_boards *board = olinuxino_boards;
 
 	while (board->id) {
@@ -261,12 +276,8 @@ const char *olimex_get_board_fdt()
 	return "";
 #elif defined(CONFIG_TARGET_A33_OLINUXINO)
 	return "sun8i-a33-olinuxino.dtb";
-#elif defined(CONFIG_TARGET_A64_OLINUXINO)
-	return "allwinner/sun50i-a64-olinuxino-1Gs16M.dtb";	//TODO: Make some detection
 #endif
 }
-
-#endif
 
 #ifdef CONFIG_TARGET_A20_OLINUXINO
 bool olimex_board_is_micro()

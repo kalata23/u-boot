@@ -4,8 +4,6 @@
  *
  * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
-#include <asm/arch/dram.h>
-#include <asm/arch/spl.h>
 #include <common.h>
 #include <i2c.h>
 #include <mmc.h>
@@ -15,6 +13,7 @@
 
 struct olimex_eeprom *eeprom = OLIMEX_EEPROM_DATA;
 
+#if CONFIG_TARGET_A20_OLINUXINO
 static int olimex_i2c_eeprom_init(void)
 {
 	int ret;
@@ -188,3 +187,4 @@ bool olimex_eeprom_is_valid(void)
 	 */
 	return (eeprom->header == OLIMEX_EEPROM_MAGIC_HEADER);
 }
+#endif

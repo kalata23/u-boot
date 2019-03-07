@@ -39,7 +39,6 @@ enum olinuxino_size {
 	.name = __name, \
 	.fdt = __fdt,
 
-#ifndef CONFIG_SPL_BUILD
 struct olinuxino_boards {
 	uint32_t id;
 	const char name[32];
@@ -48,7 +47,6 @@ struct olinuxino_boards {
 };
 
 extern struct olinuxino_boards olinuxino_boards[];
-#endif
 
 const char *olimex_get_board_name(void);
 const char *olimex_get_board_fdt(void);

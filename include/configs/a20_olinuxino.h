@@ -14,7 +14,6 @@
  * A20 specific configuration
  */
 #ifdef CONFIG_USB_EHCI_HCD
-#define CONFIG_USB_EHCI_SUNXI
 #endif
 
 #define CONFIG_ARMV7_SECURE_BASE        SUNXI_SRAM_B_BASE
@@ -196,7 +195,6 @@
 
 #ifdef CONFIG_USB_EHCI_HCD
 #define CONFIG_USB_OHCI_NEW
-#define CONFIG_USB_OHCI_SUNXI
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS 1
 #endif
 
