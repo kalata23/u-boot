@@ -224,7 +224,7 @@ struct olinuxino_boards olinuxino_boards[] = {
 #endif
 #if CONFIG_TARGET_A64_OLINUXINO
 	{
-		OLINUXINO_BOARD(8861, "A64-OLinuXino-2Ge8G-IND", "sun50i-a64-olinuxino-2Ge8G-IND.dtb")
+		OLINUXINO_BOARD(8861, "A64-OLinuXino-2Ge8G-IND", "sun50i-a64-olinuxino-2Ge8G.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(8), GBYTES(2), IND)
 	},
 	{
