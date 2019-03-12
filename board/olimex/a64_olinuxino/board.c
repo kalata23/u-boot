@@ -33,11 +33,6 @@
 #include <dm/uclass-internal.h>
 #include <dm/device-internal.h>
 
-#ifdef CONFIG_FDT_FIXUP_PARTITIONS
-#include <jffs2/load_kernel.h>
-#include <mtd_node.h>
-#endif
-
 #include "../common/board_detect.h"
 #include "../common/boards.h"
 
@@ -134,16 +129,18 @@ int board_init(void)
 	gd->bd->bi_boot_params = (PHYS_SDRAM_0 + 0x100);
 
 #ifdef CONFIG_DM_SPI_FLASH
-	ret = uclass_first_device(UCLASS_SPI_FLASH, &dev);
-	if (ret) {
-		printf("Failed to find SPI flash device\n");
-		return 0;
-	}
+	if (eeprom->config.storage == 's') {
+		ret = uclass_first_device(UCLASS_SPI_FLASH, &dev);
+		if (ret) {
+			printf("Failed to find SPI flash device\n");
+			return 0;
+		}
 
-	ret = device_probe(dev);
-	if (ret) {
-		printf("Failed to probe SPI flash device\n");
-		return 0;
+		ret = device_probe(dev);
+		if (ret) {
+			printf("Failed to probe SPI flash device\n");
+			return 0;
+		}
 	}
 #endif
 
@@ -234,29 +231,18 @@ static void mmc_pinmux_setup(int sdc)
 
 int board_mmc_init(bd_t *bis)
 {
-	struct mmc *mmc;
-
 	/* Try to initialize MMC0 */
 	mmc_pinmux_setup(0);
-	mmc = sunxi_mmc_init(0);
-	if (!mmc) {
-		printf("Failed to init MMC0!\n");
-		return -1;
-	}
+	sunxi_mmc_init(0);
 
-	if (eeprom->config.storage != 'e')
-		return 0;
 
 	/* Initialize MMC2 on boards with eMMC */
 	mmc_pinmux_setup(2);
-	mmc = sunxi_mmc_init(2);
-	if (!mmc) {
-		printf("Failed to init MMC2!\n");
-		return -1;
-	}
+	sunxi_mmc_init(2);
 
 	return 0;
 }
+
 #ifndef CONFIG_SPL_BUILD
 int mmc_get_env_dev(void)
 {
@@ -554,21 +540,5 @@ int board_fit_config_name_match(const char *name)
 
 	dtb = olimex_get_board_fdt();
 	return (!strncmp(name, dtb, strlen(dtb) - 4)) ? 0 : -1;
-}
-#endif
-
-#if defined(CONFIG_OF_SYSTEM_SETUP)
-int ft_system_setup(void *blob, bd_t *bd)
-{
-#ifdef CONFIG_FDT_FIXUP_PARTITIONS
-	struct node_info nodes[] = {
-		{ "jedec,spi-nor", MTD_DEV_TYPE_NOR, },
-	};
-
-	if (eeprom->config.storage == 's')
-		fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
-#endif
-
-	return 0;
 }
 #endif
