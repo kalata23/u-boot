@@ -358,6 +358,13 @@ config VIDEO_LCD_HITACHI_TX18D42VM
 	lcd controller which needs to be initialized over SPI, once that is
 	done they work like a regular LVDS panel.
 
+config VIDEO_LCD_OLINUXINO_PANEL
+	bool "Olimex LCD-OLinuXino LCD panel support"
+	depends on DM_I2C
+	default n
+	---help---
+	Support for Olimex LCD-OLinuXino.
+
 config VIDEO_LCD_SPI_CS
 	string "SPI CS pin for LCD related config job"
 	depends on VIDEO_LCD_SSD2828 || VIDEO_LCD_HITACHI_TX18D42VM
