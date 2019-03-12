@@ -11,6 +11,7 @@
 #include <backlight.h>
 #include <dm.h>
 #include <edid.h>
+#include <panel.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/lcdc.h>
@@ -111,6 +112,27 @@ static int sunxi_lcd_probe(struct udevice *dev)
 	ret = uclass_get_device(UCLASS_PANEL, 0, &cdev);
 	if (ret) {
 		debug("video panel not found: %d\n", ret);
+		return ret;
+	}
+
+	ret = panel_get_display_timing(cdev, &priv->timing);
+	if (!ret) {
+		ret = panel_enable_backlight(cdev);
+		if (ret) {
+			debug("%s: Failed to enable backlight\n", __func__);
+			return ret;
+		}
+		ret = panel_set_backlight(cdev, 100);
+		if (ret) {
+			debug("%s: Failed to set backlight\n", __func__);
+			return ret;
+		}
+		// TODO: Fix this!!!
+		priv->panel_bpp = 18;
+		return 0;
+
+	} else if (ret != -ENOSYS) {
+		debug("%s: Failed to get panel timings\n", __func__);
 		return ret;
 	}
 
