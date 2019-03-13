@@ -66,7 +66,7 @@ static int board_fix_ethernet(void *blob)
 	return ret;
 }
 
-#ifdef LCD_OLINUXINO
+#ifdef CONFIG_VIDEO_LCD_OLINUXINO_PANEL
 static int board_fix_lcd_olinuxino_rgb(void *blob)
 {
 	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
@@ -88,6 +88,10 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	if (phyrst_pin_value() == 1)
 		return 0;
 
+	/* If LCD is not present after relocation, skip FDT modifications */
+	if (gd->flags & GD_FLG_RELOC)
+		if (!lcd_olinuxino_is_present())
+			return 0;
 	/**
 	 * &pwm {
 	 * 	pinctrl-names = "default";
@@ -158,7 +162,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 * The following code should be executed after relocation e.g. in
 	 * ft_system_setup().
 	 */
-	if (gd->flags & GD_FLG_RELOC) {
+	if (lcd == NULL || gd->flags & GD_FLG_RELOC) {
 
 		/**
 		 * lcd_rgb666_pins: lcd_rgb666_pins {
@@ -360,13 +364,27 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 
 static int board_fix_lcd_olinuxino_ts(void *blob)
 {
+	u32 id;
 	int ret;
 
 	/* Do nothing */
 	if (phyrst_pin_value() == 1)
 		return 0;
 
-	printf("%s\n", lcd_olinuxino_eeprom.info.name);
+	if (!lcd_olinuxino_is_present())
+		return 0;
+
+	id = lcd_olinuxino_id();
+
+	/**
+	 * If ID is not passed by lcd_olinuxino, try to get eeprom id.
+	 * If LCD is not pressent, do nothing.
+	 */
+	// if (!id) {
+	//
+	// }
+	printf("ID: %d\n", id);
+	// printf("%s\n", lcd_olinuxino_eeprom.info.name);
 
 
 	return 0;
@@ -483,6 +501,10 @@ int ft_system_setup(void *blob, bd_t *bd)
 	int ret;
 	working_fdt = blob;
 
+#ifdef CONFIG_VIDEO_LCD_OLINUXINO_PANEL
+	lcd_olinuxino_init();
+#endif
+
 	/* First make copy of the current ftd blob */
 	recovery = malloc(gd->fdt_size);
 	memcpy(recovery, blob, gd->fdt_size);
@@ -494,7 +516,7 @@ int ft_system_setup(void *blob, bd_t *bd)
 
 	/* Execute fixups */
 	ret = board_fix_ethernet(blob);
-#ifdef LCD_OLINUXINO
+#ifdef CONFIG_VIDEO_LCD_OLINUXINO_PANEL
 	ret |= board_fix_lcd_olinuxino_rgb(blob);
 	ret |= board_fix_lcd_olinuxino_ts(blob);
 #endif
@@ -548,7 +570,7 @@ int board_fix_fdt(void *blob)
 
 	/* Execute fixups */
 	ret = board_fix_ethernet(blob);
-#ifdef LCD_OLINUXINO
+#ifdef CONFIG_VIDEO_LCD_OLINUXINO_PANEL
 	ret |= board_fix_lcd_olinuxino_rgb(blob);
 #endif
 	return ret;

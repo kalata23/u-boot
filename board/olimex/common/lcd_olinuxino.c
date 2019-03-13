@@ -205,11 +205,11 @@ static int lcd_olinuxino_eeprom_read(void)
 	if (ret)
 		return ret;
 
-	ret = dm_i2c_probe(dev, LCD_OLINUXINO_EEPROM_ADDRESS, 0x0, &chip);
+	ret = dm_i2c_probe(dev, 0x50, 0x0, &chip);
 	if (ret)
 		return ret;
 
-	ret = dm_i2c_read(dev, LCD_OLINUXINO_EEPROM_ADDRESS, (uint8_t *)&lcd_olinuxino_eeprom, 256);
+	ret = dm_i2c_read(dev, 0x50, (uint8_t *)&lcd_olinuxino_eeprom, 256);
 	if (ret)
 		return ret;
 
@@ -277,6 +277,13 @@ char * lcd_olinuxino_video_mode()
 
 
 	return videomode;
+}
+#endif
+
+#ifdef CONFIG_VIDEO_DE2
+int lcd_olinuxino_init(void)
+{
+	return lcd_olinuxino_eeprom_read();
 }
 #endif
 
@@ -367,4 +374,17 @@ struct lcd_olinuxino_board * lcd_olinuxino_get_data()
 	}
 
 	return NULL;
+}
+
+uint32_t lcd_olinuxino_id(void)
+{
+	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
+
+	if (id)
+		return id;
+
+	if (lcd_olinuxino_eeprom.header == LCD_OLINUXINO_HEADER_MAGIC)
+		return lcd_olinuxino_eeprom.id;
+
+	return 0;
 }

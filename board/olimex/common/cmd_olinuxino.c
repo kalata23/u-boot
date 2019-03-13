@@ -189,7 +189,7 @@ static cmd_tbl_t cmd_config[] = {
 };
 #endif
 
-#if defined(LCD_OLINUXINO)
+#if defined(CONFIG_VIDEO_LCD_OLINUXINO_PANEL)
 #include "lcd_olinuxino.h"
 
 static int do_monitor_list(cmd_tbl_t *cmdtp, int flag,
@@ -288,7 +288,7 @@ static cmd_tbl_t cmd_olinuxino[] = {
 #if defined(CONFIG_TARGET_A20_OLINUXINO)
 	U_BOOT_CMD_MKENT(config, CONFIG_SYS_MAXARGS, 0, do_olinuxino_opts, "", ""),
 #endif
-#if defined(LCD_OLINUXINO)
+#if defined(CONFIG_VIDEO_LCD_OLINUXINO_PANEL)
 	U_BOOT_CMD_MKENT(monitor, CONFIG_SYS_MAXARGS, 0, do_olinuxino_opts, "", ""),
 #endif
 };
@@ -328,7 +328,7 @@ U_BOOT_CMD(
 	"					FF:FF:FF:FF:FF:FF\n"
 	"					aabbccddeeff\n"
 #endif
-#if defined(LCD_OLINUXINO)
+#if defined(CONFIG_VIDEO_LCD_OLINUXINO_PANEL)
 	"olinuxino monitor list		- Print supported video outputs\n"
 	"olinuxino monitor set		- Set specific LCD\n"
 #endif

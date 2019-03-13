@@ -49,7 +49,9 @@ struct lcd_olinuxino_eeprom {
 } __attribute__((__packed__));
 
 
-#define OLINUXINO_PANEL(_id, _name, _pclk, _hactive, _hfp, _hbp, _hpw, _vactive, _vfp, _vbp, _vpw, _flags) \
+#define OLINUXINO_PANEL(_id, _name, _pclk, \
+	_hactive, _hfp, _hbp, _hpw, \
+	_vactive, _vfp, _vbp, _vpw, _flags) \
 	{ \
 		.id = _id, \
 		.name = _name, \
@@ -205,10 +207,10 @@ static int olinuxino_panel_probe(struct udevice *dev)
 {
 	struct olinuxino_panel_priv *priv = dev_get_priv(dev);
 	struct udevice *chip;
-	u32 crc;
 	int ret;
+	u32 crc;
 
-	memset(&priv->eeprom, 0, 256);
+	memset((u8 *)&priv->eeprom, 0, 256);
 
 	/**
 	 * If the panel is subnode of i2c device, then try autodetect
@@ -218,12 +220,11 @@ static int olinuxino_panel_probe(struct udevice *dev)
 	if (device_get_uclass_id(dev->parent) == UCLASS_I2C) {
 		ret = dm_i2c_probe(dev->parent, 0x50, 0, &chip);
 		if (ret)
-			return ret;
-
+			return -ENODEV;
 
 		ret = dm_i2c_read(chip, 0x00, (u8 *)&priv->eeprom, 256);
 		if (ret)
-			return ret;
+			return -ENODEV;
 
 		if (priv->eeprom.header != LCD_OLINUXINO_HEADER_MAGIC)
 			return -ENODEV;
@@ -231,21 +232,21 @@ static int olinuxino_panel_probe(struct udevice *dev)
 		crc = crc32(0L, (u8 *)&priv->eeprom, 252);
 		if (priv->eeprom.checksum != crc)
 			return -ENODEV;
-		}
 
 		if (IS_ENABLED(CONFIG_DM_REGULATOR) && priv->reg) {
 			debug("%s: Enable regulator '%s'\n", __func__, priv->reg->name);
 			ret = regulator_set_enable(priv->reg, true);
 			if (ret)
 				return ret;
+		}
 
 		printf("LCD: %s, Rev.%s, Serial:%08x\n",
 		       priv->eeprom.info.name,
 		       priv->eeprom.revision,
 		       priv->eeprom.serial);
 	} else {
-		uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
-		uint32_t i;
+		u32 id = env_get_ulong("lcd_olinuxino", 10, 0);
+		u32 i;
 
 		if (!id)
 			return -ENODEV;

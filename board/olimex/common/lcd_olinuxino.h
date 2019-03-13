@@ -7,8 +7,6 @@
 #ifndef __LCD_OLINUXINO_H
 #define __LCD_OLINUXINO_H
 
-#include <olinuxino_panel.h>
-
 #define LCD_OLINUXINO_EEPROM_ADDRESS	0x50
 #define LCD_OLINUXINO_HEADER_MAGIC      0x4F4CB727
 #define LCD_OLINUXINO_DATA_LEN          256
@@ -68,10 +66,16 @@ extern struct lcd_olinuxino_board lcd_olinuxino_boards[];
 
 bool lcd_olinuxino_is_present(void);
 
+#ifdef CONFIG_VIDEO_SUNXI
 char * lcd_olinuxino_video_mode(void);
 uint8_t lcd_olinuxino_dclk_phase(void);
-char * lcd_olinuxino_compatible(void);
 uint8_t lcd_olinuxino_interface(void);
+#endif
+#ifdef CONFIG_VIDEO_DE2
+int lcd_olinuxino_init(void);
+#endif
+uint32_t lcd_olinuxino_id(void);
+char * lcd_olinuxino_compatible(void);
 struct lcd_olinuxino_board * lcd_olinuxino_get_data(void);
 
 #endif /* __LCD_OLINUXINO_H */
