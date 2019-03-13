@@ -186,10 +186,10 @@
 #define CONFIG_SYS_I2C_SLAVE		0x7f
 #endif
 
-#define CONFIG_SYS_SPD_BUS_NUM		0 /* The axp209 i2c bus is bus 0 */
 #define CONFIG_VIDEO_LCD_I2C_BUS	-1 /* NA, but necessary to compile */
-#define LCD_OLINUXINO_EEPROM_BUS	I2C_0
-#define CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#define LCD_OLINUXINO
+#define LCD_OLINUXINO_EEPROM_BUS	0
+
 
 /* PMU */
 #if defined CONFIG_AXP152_POWER || defined CONFIG_AXP209_POWER || \
@@ -211,7 +211,6 @@
  */
 #define CONFIG_SUNXI_MAX_FB_SIZE (16 << 20)
 
-#define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_STD_TIMINGS
 #define VIDEO_LINE_LEN (pGD->plnSizeX)
 

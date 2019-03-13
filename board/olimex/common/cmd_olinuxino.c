@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- *
- * Copyright (C) 2018 Olimex Ltd.
+ * Copyright (c) 2019 Olimex Ltd.
  *   Author: Stefan Mavrodiev <stefan@olimex.com>
- *
- * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
+
 #include <common.h>
 #include <linux/ctype.h>
 
@@ -190,7 +189,7 @@ static cmd_tbl_t cmd_config[] = {
 };
 #endif
 
-#if defined(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)
+#if defined(LCD_OLINUXINO)
 #include "lcd_olinuxino.h"
 
 static int do_monitor_list(cmd_tbl_t *cmdtp, int flag,
@@ -262,7 +261,7 @@ static int do_olinuxino_opts(cmd_tbl_t *cmdtp, int flag, int argc, char *const a
 {
 	cmd_tbl_t *cp;
 
-#if defined(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)
+#if defined(LCD_OLINUXINO)
 	if (!strcmp(argv[0], "monitor"))
 		cp = find_cmd_tbl(argv[1], cmd_monitor, ARRAY_SIZE(cmd_monitor));
 	else
@@ -279,7 +278,7 @@ static int do_olinuxino_opts(cmd_tbl_t *cmdtp, int flag, int argc, char *const a
 
 	if (cp == NULL || argc > cp->maxargs)
 		return CMD_RET_USAGE;
-	if (flag == CMD_FLAG_REPEAT && !cp->repeatable)
+	if (flag == CMD_FLAG_REPEAT && !cp->cmd_rep)
 		return CMD_RET_SUCCESS;
 
 	return cp->cmd(cmdtp, flag, argc, argv);
@@ -289,7 +288,7 @@ static cmd_tbl_t cmd_olinuxino[] = {
 #if defined(CONFIG_TARGET_A20_OLINUXINO)
 	U_BOOT_CMD_MKENT(config, CONFIG_SYS_MAXARGS, 0, do_olinuxino_opts, "", ""),
 #endif
-#if defined(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)
+#if defined(LCD_OLINUXINO)
 	U_BOOT_CMD_MKENT(monitor, CONFIG_SYS_MAXARGS, 0, do_olinuxino_opts, "", ""),
 #endif
 };
@@ -305,7 +304,7 @@ static int do_olinuxino_ops(cmd_tbl_t *cmdtp, int flag, int argc, char *const ar
 
 	if (cp == NULL || argc > cp->maxargs)
 		return CMD_RET_USAGE;
-	if (flag == CMD_FLAG_REPEAT && !cp->repeatable)
+	if (flag == CMD_FLAG_REPEAT && !cp->cmd_rep)
 		return CMD_RET_SUCCESS;
 
 	return cp->cmd(cmdtp, flag, argc, argv);
@@ -329,7 +328,7 @@ U_BOOT_CMD(
 	"					FF:FF:FF:FF:FF:FF\n"
 	"					aabbccddeeff\n"
 #endif
-#if defined(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)
+#if defined(LCD_OLINUXINO)
 	"olinuxino monitor list		- Print supported video outputs\n"
 	"olinuxino monitor set		- Set specific LCD\n"
 #endif

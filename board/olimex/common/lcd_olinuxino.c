@@ -4,13 +4,11 @@
  *
  * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
-#include <asm/arch/dram.h>
-#include <asm/arch/spl.h>
 #include <common.h>
+#include <dm.h>
 #include <i2c.h>
 
 #include "lcd_olinuxino.h"
-#include "board_detect.h"
 
 struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 	{
@@ -188,62 +186,49 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 		}
 
 	},
+#endif
 	{
 		.id = 0,
 	},
-#endif
 };
 
 struct lcd_olinuxino_eeprom lcd_olinuxino_eeprom;
-char videomode[128];
 
-static int lcd_olinuxino_eeprom_init(void)
-{
-	int ret;
-
-	if ((ret = i2c_set_bus_num(LCD_OLINUXINO_EEPROM_BUS))) {
-		debug("%s(): Failed to set bus!\n", __func__);
-		return ret;
-	}
-
-	if ((ret = i2c_probe(LCD_OLINUXINO_EEPROM_ADDRESS))) {
-		debug("%s(): Failed to probe!\n", __func__);
-		return ret;
-	}
-
-	return 0;
-}
 
 static int lcd_olinuxino_eeprom_read(void)
 {
+	struct udevice *dev, *chip;
 	uint32_t crc;
 	int ret;
 
-	if ((ret = lcd_olinuxino_eeprom_init())) {
-		debug("Error: Failed to init EEPROM!\n");
+	ret = uclass_get_device(UCLASS_I2C, LCD_OLINUXINO_EEPROM_BUS, &dev);
+	if (ret)
 		return ret;
-	}
 
-	if ((ret = i2c_read(LCD_OLINUXINO_EEPROM_ADDRESS, 0, 1, (uint8_t *)&lcd_olinuxino_eeprom, 256))) {
-		debug("Error: Failed to read EEPROM!\n");
+	ret = dm_i2c_probe(dev, LCD_OLINUXINO_EEPROM_ADDRESS, 0x0, &chip);
+	if (ret)
 		return ret;
-	}
 
-	if (lcd_olinuxino_eeprom.header != LCD_OLINUXINO_HEADER_MAGIC) {
-		debug("Error: EEPROM magic header is not valid!\n");
-		memset(&lcd_olinuxino_eeprom, 0xFF, 256);
-		return 1;
-	}
+	ret = dm_i2c_read(dev, LCD_OLINUXINO_EEPROM_ADDRESS, (uint8_t *)&lcd_olinuxino_eeprom, 256);
+	if (ret)
+		return ret;
+
+	if (lcd_olinuxino_eeprom.header != LCD_OLINUXINO_HEADER_MAGIC)
+		goto error;
 
 	crc = crc32(0L, (uint8_t *)&lcd_olinuxino_eeprom, 252);
-	if (lcd_olinuxino_eeprom.checksum != crc) {
-		debug("Error: CRC checksum is not valid!\n");
-		memset(&lcd_olinuxino_eeprom, 0xFF, 256);
-		return 1;
-	}
+	if (lcd_olinuxino_eeprom.checksum != crc)
+		goto error;
 
 	return 0;
+
+error:
+	memset(&lcd_olinuxino_eeprom, 0xFF, 256);
+	return 1;
 }
+
+#ifdef CONFIG_VIDEO_SUNXI
+char videomode[128];
 
 char * lcd_olinuxino_video_mode()
 {
@@ -293,8 +278,19 @@ char * lcd_olinuxino_video_mode()
 
 	return videomode;
 }
+#endif
 
-bool lcd_olinuxino_is_present()
+
+
+/**
+ * lcd_olinuxino_is_present() - Check if display panel is present
+ *
+ * If lcd_olinuxino env variable is passed, then always assume present,
+ * otherwise check the eeprom for magic header.
+ *
+ * @return true of present, false - not present
+ */
+bool lcd_olinuxino_is_present(void)
 {
 	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
 
@@ -304,7 +300,12 @@ bool lcd_olinuxino_is_present()
 		return true;
 }
 
-char * lcd_olinuxino_compatible()
+/**
+ * lcd_olinuxino_compatible() - Get LCD compatible string
+ *
+ * @return compatible string
+ */
+char * lcd_olinuxino_compatible(void)
 {
 	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
 	uint32_t i;
@@ -320,12 +321,24 @@ char * lcd_olinuxino_compatible()
 	return "olimex,lcd-olinuxino";
 }
 
-uint8_t lcd_olinuxino_dclk_phase()
+/**
+ * lcd_olinuxino_dclk_phase() - Get LCD dclk phase
+ *
+ * @return phase 0 to 3
+ */
+uint8_t lcd_olinuxino_dclk_phase(void)
 {
 	return 0;
 }
 
-uint8_t lcd_olinuxino_interface()
+/**
+ * lcd_olinuxino_interface() - Get LCD interface
+ *
+ * Check if connected LCD interface is either
+ *
+ * @return interface number
+ */
+uint8_t lcd_olinuxino_interface(void)
 {
 	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
 
@@ -335,6 +348,11 @@ uint8_t lcd_olinuxino_interface()
 		LCD_OLINUXINO_IF_PARALLEL;
 }
 
+/**
+ * lcd_olinuxino_get_data() - Get data for static described LCD
+ *
+ * @return lcd data structure or NULL
+ */
 struct lcd_olinuxino_board * lcd_olinuxino_get_data()
 {
 	uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);

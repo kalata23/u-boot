@@ -1,12 +1,13 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2018 Olimex Ltd.
+ * Copyright (c) 2019 Olimex Ltd.
  *   Author: Stefan Mavrodiev <stefan@olimex.com>
- *
- * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
 
 #ifndef __LCD_OLINUXINO_H
 #define __LCD_OLINUXINO_H
+
+#include <olinuxino_panel.h>
 
 #define LCD_OLINUXINO_EEPROM_ADDRESS	0x50
 #define LCD_OLINUXINO_HEADER_MAGIC      0x4F4CB727
@@ -41,12 +42,7 @@ struct lcd_olinuxino_info {
 	u32 bus_flag;
 } __attribute__((__packed__));
 
-struct lcd_olinuxino_board {
-	uint32_t id;
-	char compatible[32];
-	struct lcd_olinuxino_info info;
-	struct lcd_olinuxino_mode mode;
-};
+
 
 struct lcd_olinuxino_eeprom {
 	u32 header;
@@ -60,6 +56,14 @@ struct lcd_olinuxino_eeprom {
 } __attribute__((__packed__));
 
 extern struct lcd_olinuxino_eeprom lcd_olinuxino_eeprom;
+
+struct lcd_olinuxino_board {
+	uint32_t id;
+	char compatible[32];
+	struct lcd_olinuxino_info info;
+	struct lcd_olinuxino_mode mode;
+};
+
 extern struct lcd_olinuxino_board lcd_olinuxino_boards[];
 
 bool lcd_olinuxino_is_present(void);

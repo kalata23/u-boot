@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 2019 Olimex Ltd.
- * Written by Stefan Mavrodiev <stefan@olimex.com>
+ *   Author: Stefan Mavrodiev <stefan@olimex.com>
  */
 
 #include <common.h>
@@ -11,6 +11,8 @@
 #include <panel.h>
 #include <asm/gpio.h>
 #include <power/regulator.h>
+
+#define LCD_OLINUXINO_HEADER_MAGIC      0x4F4CB727
 
 struct lcd_olinuxino_mode {
 	u32 pixelclock;
@@ -45,6 +47,38 @@ struct lcd_olinuxino_eeprom {
 	u8 reserved[180];
 	u32 checksum;
 } __attribute__((__packed__));
+
+
+#define OLINUXINO_PANEL(_id, _name, _pclk, _hactive, _hfp, _hbp, _hpw, _vactive, _vfp, _vbp, _vpw, _flags) \
+	{ \
+		.id = _id, \
+		.name = _name, \
+		{ \
+			.pixelclock = _pclk, \
+			.hactive = _hactive, \
+			.hfp = _hfp, \
+			.hbp = _hbp, \
+			.hpw = _hpw, \
+			.vactive = _vactive, \
+			.vfp = _vfp, \
+			.vbp = _vbp, \
+			.vpw = _vpw, \
+			.flags = _flags \
+		} \
+	}
+
+static struct lcd_olinuxino_board {
+	uint32_t id;
+	char name[32];
+	struct lcd_olinuxino_mode mode;
+} lcd_olinuxino_b[] = {
+	OLINUXINO_PANEL(7859, "LCD-OLinuXino-4.3TS", 12000, 480, 8, 23, 20, 272, 4, 13, 10, 0),
+	OLINUXINO_PANEL(8630, "LCD-OLinuXino-5", 33000, 800, 210, 26, 20, 480, 2, 13, 10, 0),
+	OLINUXINO_PANEL(7864, "LCD-OLinuXino-7", 33000, 800, 210, 26, 20, 480, 2, 13, 10, 0),
+	OLINUXINO_PANEL(9278, "LCD-OLinuXino-7CTS", 45000, 1024, 10, 160, 6, 600, 1, 22, 1, 0),
+	OLINUXINO_PANEL(7862, "LCD-OLinuXino-10", 45000, 1024, 10, 160, 6, 600, 1, 22, 1, 0),
+	OLINUXINO_PANEL(9284, "LCD-OLinuXino-10CTS", 45000, 1024, 10, 160, 6, 600, 1, 22, 1, 0),
+};
 
 struct olinuxino_panel_priv {
 	struct udevice *reg;
@@ -171,30 +205,61 @@ static int olinuxino_panel_probe(struct udevice *dev)
 {
 	struct olinuxino_panel_priv *priv = dev_get_priv(dev);
 	struct udevice *chip;
+	u32 crc;
 	int ret;
 
-	if (device_get_uclass_id(dev->parent) != UCLASS_I2C)
-		return -EPROTONOSUPPORT;
+	memset(&priv->eeprom, 0, 256);
 
-	ret = dm_i2c_probe(dev->parent, 0x50, 0, &chip);
-	if (ret)
-		return ret;
-
-	ret = dm_i2c_read(chip, 0x00, (u8 *)&priv->eeprom, 256);
-	if (ret)
-		return ret;
-
-	if (IS_ENABLED(CONFIG_DM_REGULATOR) && priv->reg) {
-		debug("%s: Enable regulator '%s'\n", __func__, priv->reg->name);
-		ret = regulator_set_enable(priv->reg, true);
+	/**
+	 * If the panel is subnode of i2c device, then try autodetect
+	 * function. Otherwise, get lcd_olinuxino env variable and try
+	 * manual timing setting.
+	 */
+	if (device_get_uclass_id(dev->parent) == UCLASS_I2C) {
+		ret = dm_i2c_probe(dev->parent, 0x50, 0, &chip);
 		if (ret)
 			return ret;
-	}
 
-	printf("LCD: %s, Rev.%s, Serial:%08x\n",
-	       priv->eeprom.info.name,
-	       priv->eeprom.revision,
-	       priv->eeprom.serial);
+
+		ret = dm_i2c_read(chip, 0x00, (u8 *)&priv->eeprom, 256);
+		if (ret)
+			return ret;
+
+		if (priv->eeprom.header != LCD_OLINUXINO_HEADER_MAGIC)
+			return -ENODEV;
+
+		crc = crc32(0L, (u8 *)&priv->eeprom, 252);
+		if (priv->eeprom.checksum != crc)
+			return -ENODEV;
+		}
+
+		if (IS_ENABLED(CONFIG_DM_REGULATOR) && priv->reg) {
+			debug("%s: Enable regulator '%s'\n", __func__, priv->reg->name);
+			ret = regulator_set_enable(priv->reg, true);
+			if (ret)
+				return ret;
+
+		printf("LCD: %s, Rev.%s, Serial:%08x\n",
+		       priv->eeprom.info.name,
+		       priv->eeprom.revision,
+		       priv->eeprom.serial);
+	} else {
+		uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
+		uint32_t i;
+
+		if (!id)
+			return -ENODEV;
+
+		for (i = 0; i < ARRAY_SIZE(lcd_olinuxino_b); i++) {
+			if (lcd_olinuxino_b[i].id == id) {
+				printf("LCD: %s\n", lcd_olinuxino_b[i].name);
+				memcpy((u8 *)priv->eeprom.reserved, (u8 *)&lcd_olinuxino_b[i].mode, sizeof(struct lcd_olinuxino_mode));
+				return 0;
+			}
+		}
+
+		return -ENODEV;
+	}
 
 	return 0;
 }
