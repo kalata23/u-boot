@@ -73,21 +73,60 @@ uint32_t fdt_get_max_phandle(const void *fdt)
 	return 0;
 }
 
+/**
+ * NOTE: fdt64_ld(), fdt_mem_rsv(), fdt_get_mem_rsv() and fdt_num_mem_rsv()
+ * are pulled from libfdt master branch. Should be removed once aligment
+ * issue is resolved.
+ */
+static inline uint64_t fdt64_ld(const fdt64_t *p)
+{
+	const uint8_t *bp = (const uint8_t *)p;
+
+	return ((uint64_t)bp[0] << 56)
+		| ((uint64_t)bp[1] << 48)
+		| ((uint64_t)bp[2] << 40)
+		| ((uint64_t)bp[3] << 32)
+		| ((uint64_t)bp[4] << 24)
+		| ((uint64_t)bp[5] << 16)
+		| ((uint64_t)bp[6] << 8)
+		| bp[7];
+}
+
+static const struct fdt_reserve_entry *fdt_mem_rsv(const void *fdt, int n)
+{
+	int offset = n * sizeof(struct fdt_reserve_entry);
+	int absoffset = fdt_off_mem_rsvmap(fdt) + offset;
+
+	if (absoffset < fdt_off_mem_rsvmap(fdt))
+		return NULL;
+	if (absoffset > fdt_totalsize(fdt) - sizeof(struct fdt_reserve_entry))
+		return NULL;
+	return fdt_mem_rsv_(fdt, n);
+}
+
 int fdt_get_mem_rsv(const void *fdt, int n, uint64_t *address, uint64_t *size)
 {
-	FDT_CHECK_HEADER(fdt);
-	*address = fdt64_to_cpu(fdt_mem_rsv_(fdt, n)->address);
-	*size = fdt64_to_cpu(fdt_mem_rsv_(fdt, n)->size);
+	const struct fdt_reserve_entry *re;
+
+	re = fdt_mem_rsv(fdt, n);
+	if (!re)
+		return -FDT_ERR_BADOFFSET;
+
+	*address = fdt64_ld(&re->address);
+	*size = fdt64_ld(&re->size);
 	return 0;
 }
 
 int fdt_num_mem_rsv(const void *fdt)
 {
-	int i = 0;
+	int i;
+	const struct fdt_reserve_entry *re;
 
-	while (fdt64_to_cpu(fdt_mem_rsv_(fdt, i)->size) != 0)
-		i++;
-	return i;
+	for (i = 0; (re = fdt_mem_rsv(fdt, i)) != NULL; i++) {
+		if (fdt64_ld(&re->size) == 0)
+			return i;
+	}
+	return -FDT_ERR_TRUNCATED;
 }
 
 static int _nextprop(const void *fdt, int offset)
