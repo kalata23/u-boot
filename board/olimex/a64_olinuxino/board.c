@@ -33,8 +33,9 @@
 #include <dm/uclass-internal.h>
 #include <dm/device-internal.h>
 
-#include "../common/board_detect.h"
 #include "../common/boards.h"
+#include "../common/board_detect.h"
+#include "../common/lcd_olinuxino.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -443,8 +444,8 @@ static void setup_environment(const void *fdt)
 int misc_init_r(void)
 {
 	__maybe_unused struct udevice *dev;
+	__maybe_unused int ret;
 	uint boot;
-	int ret;
 
 	env_set("fel_booted", NULL);
 	env_set("fel_scriptaddr", NULL);
@@ -479,6 +480,9 @@ int misc_init_r(void)
 		printf("Failed to probe USB device\n");
 		return 0;
 	}
+#endif
+#ifdef CONFIG_VIDEO_LCD_OLINUXINO_PANEL
+	lcd_olinuxino_init();
 #endif
 	return 0;
 }

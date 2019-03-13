@@ -197,19 +197,19 @@ struct lcd_olinuxino_eeprom lcd_olinuxino_eeprom;
 
 static int lcd_olinuxino_eeprom_read(void)
 {
-	struct udevice *dev, *chip;
+	struct udevice *bus, *chip;
 	uint32_t crc;
 	int ret;
 
-	ret = uclass_get_device(UCLASS_I2C, LCD_OLINUXINO_EEPROM_BUS, &dev);
+	ret = uclass_get_device_by_seq(UCLASS_I2C, LCD_OLINUXINO_EEPROM_BUS, &bus);
 	if (ret)
 		return ret;
 
-	ret = dm_i2c_probe(dev, 0x50, 0x0, &chip);
+	ret = dm_i2c_probe(bus, 0x50, 0x0, &chip);
 	if (ret)
 		return ret;
 
-	ret = dm_i2c_read(dev, 0x50, (uint8_t *)&lcd_olinuxino_eeprom, 256);
+	ret = dm_i2c_read(chip, 0x00, (uint8_t *)&lcd_olinuxino_eeprom, 256);
 	if (ret)
 		return ret;
 
@@ -224,7 +224,7 @@ static int lcd_olinuxino_eeprom_read(void)
 
 error:
 	memset(&lcd_olinuxino_eeprom, 0xFF, 256);
-	return 1;
+	return -ENODEV;
 }
 
 #ifdef CONFIG_VIDEO_SUNXI

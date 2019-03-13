@@ -501,10 +501,6 @@ int ft_system_setup(void *blob, bd_t *bd)
 	int ret;
 	working_fdt = blob;
 
-#ifdef CONFIG_VIDEO_LCD_OLINUXINO_PANEL
-	lcd_olinuxino_init();
-#endif
-
 	/* First make copy of the current ftd blob */
 	recovery = malloc(gd->fdt_size);
 	memcpy(recovery, blob, gd->fdt_size);
