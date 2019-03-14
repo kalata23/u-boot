@@ -73,6 +73,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 
 	uint32_t backlight_phandle;
 	uint32_t lcd_pins_phandle;
+	uint32_t i2c_pins_phandle;
 	uint32_t panel_endpoint_phandle;
 	uint32_t pinctrl_phandle;
 	uint32_t pwm_phandle;
@@ -219,11 +220,22 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 		 */
 
 		if (!lcd) {
+
+			offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/i2c0_pins");
+			if (offset < 0)
+				return offset;
+
+			i2c_pins_phandle = fdt_create_phandle(blob, offset);
+			if (!i2c_pins_phandle)
+				return -1;
+
 			offset = fdt_path_offset(blob, "/soc/i2c@1c2ac00");
 			if (offset < 0)
 				return offset;
 
 			ret = fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
+			ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
+			ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", i2c_pins_phandle);
 			if (ret)
 				return ret;
 		} else {
@@ -364,118 +376,115 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 
 static int board_fix_lcd_olinuxino_ts(void *blob)
 {
+	uint32_t i2c_pins_phandle;
+	uint32_t pinctrl_phandle;
+	fdt32_t prop[4];
+	int offset;
 	u32 id;
 	int ret;
 
-	/* Do nothing */
+	/**
+	 * If thernet is selected do nothing.
+	 */
 	if (phyrst_pin_value() == 1)
 		return 0;
 
+	/**
+	 * Check if there is LCD attached.
+	 * If so based on its ID enable different touchscreen.
+	 */
 	if (!lcd_olinuxino_is_present())
 		return 0;
 
 	id = lcd_olinuxino_id();
 
-	/**
-	 * If ID is not passed by lcd_olinuxino, try to get eeprom id.
-	 * If LCD is not pressent, do nothing.
-	 */
-	// if (!id) {
-	//
-	// }
-	printf("ID: %d\n", id);
-	// printf("%s\n", lcd_olinuxino_eeprom.info.name);
+	if (id != 8630 && 	/* LCD-OLinuXino-5 */
+	    id != 9278 &&	/* LCD-OLinuXino-7CTS */
+	    id != 9284)		/* LCD-OLinuXino-10CTS */
+		return 0;
 
+	offset = fdt_path_offset(blob, "/soc/i2c@1c2ac00");
+	if (offset < 0)
+		return offset;
 
-	return 0;
+	if (!fdtdec_get_is_enabled(blob, offset)) {
+		offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/i2c0_pins");
+		if (offset < 0)
+			return offset;
 
-#if 0
+		i2c_pins_phandle = fdt_create_phandle(blob, offset);
+		if (!i2c_pins_phandle)
+			return -1;
 
+		offset = fdt_path_offset(blob, "/soc/i2c@1c2ac00");
+		if (offset < 0)
+			return offset;
 
-		if ((!lcd && (lcd_olinuxino_eeprom.id == 9278 ||	/* LCD-OLinuXino-7CTS */
-		    lcd_olinuxino_eeprom.id == 9284)) ||		/* LCD-OLinuXino-10CTS */
-		    (lcd && (lcd->id == 8630 || 			/* LCD-OLinuXino-5 */
-		    lcd->id == 9278 ||					/* LCD-OLinuXino-7CTS */
-		    lcd->id == 9284))) {				/* LCD-OLinuXino-10CTS */
+		ret = fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
+		ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
+		ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", i2c_pins_phandle);
+		if (ret)
+			return ret;
+	}
 
-			offset = get_path_offset(blob, PATH_I2C2, path);
+	if (id == 8630) {
+		offset = fdt_add_subnode(blob, offset, "ft5x@38");
+		if (offset < 0)
+			return offset;
+
+		ret = fdt_setprop_string(blob, offset, "compatible", "edt,edt-ft5306");
+		ret |= fdt_setprop_u32(blob, offset, "reg", 0x38);
+		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-x", 800);
+		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
+	} else {
+		if (id == 9278) {
+			offset = fdt_add_subnode(blob, offset, "gt911@14");
 			if (offset < 0)
 				return offset;
 
-			if (lcd && lcd->id == 8630) {
-				offset = fdt_add_subnode(blob, offset, "ft5x@38");
-				if (offset < 0)
-					return offset;
-
-				ret = fdt_setprop_string(blob, offset, "compatible", "edt,edt-ft5306");
-				ret |= fdt_setprop_u32(blob, offset, "reg", 0x38);
-				ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-x", 800);
-				ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
-			} else {
-				if ((!lcd && lcd_olinuxino_eeprom.id == 9278) ||
-				    (lcd && lcd->id == 9278)) {
-					offset = fdt_add_subnode(blob, offset, "gt911@14");
-					if (offset < 0)
-						return offset;
-
-					ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
-				} else {
-					offset = fdt_add_subnode(blob, offset, "gt928@14");
-					if (offset < 0)
-						return offset;
-
-					ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt928");
-				}
-				ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
-			}
-			ret |= fdt_setprop_u32(blob, offset, "interrupt-parent", pinctrl_phandle);
-
-			gpio = sunxi_name_to_gpio(olimex_get_lcd_irq_pin());
-			irq[0] = cpu_to_fdt32(gpio >> 5);
-			irq[1] = cpu_to_fdt32(gpio & 0x1F);
-			irq[2] = cpu_to_fdt32(2);
-			ret |= fdt_setprop(blob, offset, "interrupts", irq, sizeof(irq));
-
-			gpios[0] = cpu_to_fdt32(pinctrl_phandle);
-			gpios[1] = cpu_to_fdt32(gpio >> 5);
-			gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-			gpios[3] = cpu_to_fdt32(0);
-			ret |= fdt_setprop(blob, offset, "irq-gpios", gpios, sizeof(gpios));
-
-			gpio = sunxi_name_to_gpio(olimex_get_lcd_rst_pin());
-			gpios[0] = cpu_to_fdt32(pinctrl_phandle);
-			gpios[1] = cpu_to_fdt32(gpio >> 5);
-			gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-			if (lcd && lcd->id == 8630)
-				gpios[3] = cpu_to_fdt32(1);
-			else
-				gpios[3] = cpu_to_fdt32(0);
-			ret |= fdt_setprop(blob, offset, "reset-gpios", gpios, sizeof(gpios));
-
-			if (lcd_olinuxino_eeprom.id == 9278 || (lcd && lcd->id == 9278))
-				ret |= fdt_setprop_empty(blob, offset, "touchscreen-swapped-x-y");
-
+			ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
 		} else {
-			/* Enable SUN4I-TS */
-			offset = get_path_offset(blob, PATH_RTP, NULL);
+			offset = fdt_add_subnode(blob, offset, "gt928@14");
 			if (offset < 0)
 				return offset;
 
-			ret = fdt_setprop_empty(blob, offset, "allwinner,ts-attached");
-
-			/* Some board comes with inverted x axis */
-			if (lcd && (
-				lcd->id == 7862 ||	/*  LCD-OLinuXino-10 */
-				lcd->id == 7864 ||	/*  LCD-OLinuXino-7 */
-				lcd->id == 7859		/* LCD-OLinuXino-4.3TS */
-			))
-				ret |= fdt_setprop_empty(blob, offset, "touchscreen-inverted-x");
+			ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt928");
 		}
+		ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
+	}
 
-		return ret;
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
+	if (offset < 0)
+		return offset;
 
-	return 0;
-#endif
+	pinctrl_phandle = fdt_create_phandle(blob, offset);
+	if (!pinctrl_phandle)
+		return -1;
+
+	ret = fdt_setprop_u32(blob, offset, "interrupt-parent", pinctrl_phandle);
+
+	prop[0] = cpu_to_fdt32(7);
+	prop[1] = cpu_to_fdt32(7);
+	prop[2] = cpu_to_fdt32(2);
+	ret |= fdt_setprop(blob, offset, "interrupts", prop, sizeof(fdt32_t) * 3);
+
+	prop[0] = cpu_to_fdt32(pinctrl_phandle);
+	prop[1] = cpu_to_fdt32(7);
+	prop[2] = cpu_to_fdt32(7);
+	prop[3] = cpu_to_fdt32(0);
+	ret |= fdt_setprop(blob, offset, "irq-gpios", prop, sizeof(fdt32_t) * 4);
+
+	prop[0] = cpu_to_fdt32(pinctrl_phandle);
+	prop[1] = cpu_to_fdt32(7);
+	prop[2] = cpu_to_fdt32(8);
+	prop[3] = cpu_to_fdt32((id == 8630) ? 1 : 0);
+
+	ret |= fdt_setprop(blob, offset, "reset-gpios", prop, sizeof(fdt32_t) * 4);
+
+	if (id == 9278)
+		ret |= fdt_setprop_empty(blob, offset, "touchscreen-swapped-x-y");
+
+	return ret;
 }
 #endif
 
@@ -505,8 +514,8 @@ int ft_system_setup(void *blob, bd_t *bd)
 	recovery = malloc(gd->fdt_size);
 	memcpy(recovery, blob, gd->fdt_size);
 
-	/* Increase FDT blob size by 4KiB */
-	ret = fdt_increase_size(blob, 4096);
+	/* Increase FDT blob size by 16KiB */
+	ret = fdt_increase_size(blob, 16384);
 	if (ret)
 		return ret;
 
