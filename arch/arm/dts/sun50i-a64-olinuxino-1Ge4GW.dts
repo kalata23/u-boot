@@ -72,7 +72,6 @@
 	bus-width = <8>;
 	non-removable;
 	cap-mmc-hw-reset;
-	mmc-ddr-1_8v;
 	status = "okay";
 };
 

@@ -34,6 +34,15 @@
 		};
 	};
 
+	reg_vcc_sys: vcc-sys {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc-sys";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		regulator-always-on;
+		status = "okay";
+	};
+
 	reg_usb1_vbus: usb1-vbus {
 		compatible = "regulator-fixed";
 		regulator-name = "usb1-vbus";
@@ -69,7 +78,7 @@
 };
 
 &hdmi {
-	hvcc-supply = <&reg_dldo1>;
+	hvcc-supply = <&reg_vcc_sys>;
 	status = "okay";
 };
 
@@ -77,6 +86,15 @@
 	hdmi_out_con: endpoint {
 		remote-endpoint = <&hdmi_con_in>;
 	};
+};
+
+/* Exposed to UEXT connector */
+&i2c1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pins>;
+	status = "disabled";
 };
 
 &mdio {
@@ -241,14 +259,27 @@
 };
 
 &spdif {
-        status = "disabled";
+	status = "disabled";
 };
 
+/* Exposed on UEXT */
+&spi0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi0_pins>;
+	status = "disabled";
+};
 
 &uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_pb_pins>;
 	status = "okay";
+};
+
+/* Exposed on UEXT */
+&uart3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart3_pins>;
+	status = "disabled";
 };
 
 &usb_otg {

@@ -10,7 +10,6 @@
 
 / {
 	model = "Olimex A64-Olinuxino-2Ge8G-IND";
-	compatible = "olimex,a64-olinuxino", "allwinner,sun50i-a64";
 };
 
 &mmc2 {
@@ -21,6 +20,5 @@
 	bus-width = <8>;
 	non-removable;
 	cap-mmc-hw-reset;
-	mmc-ddr-1_8v;
 	status = "okay";
 };
