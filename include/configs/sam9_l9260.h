@@ -174,6 +174,19 @@
 #endif
 
 #define	CONFIG_EXTRA_ENV_SETTINGS \
+	"setenv serverip 192.168.0.20\0" \
+	"setenv loglevel 8\0" \
+	"nandboot=" \
+                "setenv bootargs console=ttyS0,115200 loglevel=${loglevel}; rootfstype=jffs2 root=/dev/mtdblock1 rw" \
+                "dhcp 0x22000000 SAM9-L9260/zImage; " \
+                "tftp 0x21800000 SAM9-L9260/at91-sam9_l9260.dtb; " \
+                "bootz 0x22000000 - 0x21800000\0" \
+	"tftpboot=" \
+		"setenv bootargs console=ttyS0,115200 loglevel=${loglevel}; " \
+		"dhcp 0x22000000 SAM9-L9260/zImage; " \
+		"tftp 0x23000000 SAM9-L9260/rootfs.cpio.uboot; " \
+		"tftp 0x21800000 SAM9-L9260/at91-sam9_l9260.dtb; " \
+		"bootz 0x22000000 0x23000000 0x21800000\0" \
 	"update_uboot=" \
 		"setenv serverip 192.168.0.20; " \
 		"dhcp 0x22000000 SAM9-L9260/u-boot.bin; " \
