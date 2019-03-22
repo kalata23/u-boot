@@ -149,7 +149,6 @@
 #define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PC14
 #define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PC13
 
-#if 0
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"scriptaddr=0x21000000\0" \
 	"fdt_addr_r=0x21100000\0" \
@@ -157,43 +156,38 @@
 	"kernel_addr_r=0x22000000\0" \
 	"ramdisk_addr_r=0x23000000\0"
 
+#define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
+	"bootcmd_" #devtypel "=" \
+	"run nandboot\0"
+
+#define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
+	#devtypel " "
+
 /* Basic environment settings */
 #define BOOT_TARGET_DEVICES(func) \
+	func(NAND, nand, na) \
 	func(DHCP, dhcp, na)
 
 #include <config_distro_bootcmd.h>
-#endif
-
-#if 0
-#define CONFIG_BOOTCOMMAND	"setenv serverip 192.168.0.20; " \
-				"setenv bootargs console=ttyS0,115200 loglevel=8; " \
-				"dhcp 0x22000000 SAM9-L9260/zImage; " \
-				"tftp 0x23000000 SAM9-L9260/rootfs.cpio.uboot; " \
-				"tftp 0x21800000 SAM9-L9260/at91sam9260ek.dtb; " \
-				"bootz 0x22000000 0x23000000 0x21800000\0"
-#endif
 
 #define	CONFIG_EXTRA_ENV_SETTINGS \
-	"setenv serverip 192.168.0.20\0" \
-	"setenv loglevel 8\0" \
-	"nandboot=" \
-                "setenv bootargs console=ttyS0,115200 loglevel=${loglevel}; rootfstype=jffs2 root=/dev/mtdblock1 rw" \
-                "dhcp 0x22000000 SAM9-L9260/zImage; " \
-                "tftp 0x21800000 SAM9-L9260/at91-sam9_l9260.dtb; " \
-                "bootz 0x22000000 - 0x21800000\0" \
-	"tftpboot=" \
-		"setenv bootargs console=ttyS0,115200 loglevel=${loglevel}; " \
-		"dhcp 0x22000000 SAM9-L9260/zImage; " \
-		"tftp 0x23000000 SAM9-L9260/rootfs.cpio.uboot; " \
-		"tftp 0x21800000 SAM9-L9260/at91-sam9_l9260.dtb; " \
-		"bootz 0x22000000 0x23000000 0x21800000\0" \
-	"update_uboot=" \
-		"setenv serverip 192.168.0.20; " \
-		"dhcp 0x22000000 SAM9-L9260/u-boot.bin; " \
-		"sf probe; " \
-		"sf erase 0x8400 0x84000; " \
-		"sf write 0x22000000 0x8400 0x84000\0" \
-	"mtdparts="CONFIG_MTDPARTS_DEFAULT"\0"
+	MEM_LAYOUT_ENV_SETTINGS \
+	"console=ttyS0,115200\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts="CONFIG_MTDPARTS_DEFAULT"\0" \
+	"nandroot=ubi0:rootfs ubi.mtd=2 rw noinitrd\0" \
+	"nandrootfstype=ubifs rootwait\0" \
+	"nandargs=setenv bootargs console=${console} " \
+		"${mtdparts} " \
+		"${optargs} " \
+		"root=${nandroot} " \
+		"rootfstype=${nandrootfstype}\0" \
+	"nandboot=echo Booting from nand ...; " \
+		"run nandargs; " \
+		"nand read ${fdt_addr_r} NAND.fdt; " \
+		"nand read ${kernel_addr_r} NAND.kernel; " \
+		"bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
+	BOOTENV
 
 /*
  * Initial stack pointer: 4k - GENERATED_GBL_DATA_SIZE in internal SRAM,
@@ -202,12 +196,5 @@
  */
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(ATMEL_BASE_SRAM1 + 0x1000 - GENERATED_GBL_DATA_SIZE)
-
-#define CONFIG_SYS_MASTER_CLOCK		(198656000/2)
-#define AT91_PLL_LOCK_TIMEOUT		1000000
-#define CONFIG_SYS_AT91_PLLA		0x2060bf09
-#define CONFIG_SYS_MCKR			0x100
-#define CONFIG_SYS_MCKR_CSS		(0x02 | CONFIG_SYS_MCKR)
-#define CONFIG_SYS_AT91_PLLB		0x10483f0e
 
 #endif /* __CONFIG_H */

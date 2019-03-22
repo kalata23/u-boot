@@ -202,57 +202,6 @@ int board_eth_init(bd_t *bis)
 #endif /* CONFIG_MACB */
 #endif
 
-#if defined(CONFIG_SPL_BUILD)
-#include <spl.h>
-#include <nand.h>
-#include <spi_flash.h>
-
-void matrix_init(void)
-{
-	struct at91_matrix *mat = (struct at91_matrix *)ATMEL_BASE_MATRIX;
-
-	writel((readl(&mat->scfg[3]) & (~AT91_MATRIX_SLOT_CYCLE))
-			| AT91_MATRIX_SLOT_CYCLE_(0x40),
-			&mat->scfg[3]);
-}
-
-void at91_spl_board_init(void)
-{
-	/* Configure LEDs */
-	sam9_l9260_request_gpio();
-	at91_set_gpio_output(CONFIG_GREEN_LED, 0);
-	at91_set_gpio_output(CONFIG_YELLOW_LED, 0);
-}
-
-#define SDRAM_BASE_CONF	(AT91_SDRAMC_NC_9 | AT91_SDRAMC_NR_13 \
-			 | AT91_SDRAMC_CAS_2 \
-			 | AT91_SDRAMC_NB_4 | AT91_SDRAMC_DBW_32 \
-			 | AT91_SDRAMC_TWR_VAL(2) | AT91_SDRAMC_TRC_VAL(7) \
-			 | AT91_SDRAMC_TRP_VAL(2) | AT91_SDRAMC_TRCD_VAL(2) \
-			 | AT91_SDRAMC_TRAS_VAL(5) | AT91_SDRAMC_TXSR_VAL(8))
-
-void mem_init(void)
-{
-	struct at91_matrix *ma = (struct at91_matrix *)ATMEL_BASE_MATRIX;
-	struct at91_port *port = (struct at91_port *)ATMEL_BASE_PIOC;
-	struct sdramc_reg setting;
-
-	setting.cr = SDRAM_BASE_CONF;
-	setting.mdr = AT91_SDRAMC_MD_SDRAM;
-	setting.tr = (CONFIG_SYS_MASTER_CLOCK * 7) / 1000000;
-
-	/*
-	 * I write here directly in this register, because this
-	 * approach is smaller than calling at91_set_a_periph() in a
-	 * for loop. This saved me 96 bytes.
-	 */
-	writel(0xffff0000, &port->pdr);
-
-	writel(readl(&ma->ebicsa) | AT91_MATRIX_CS1A_SDRAMC, &ma->ebicsa);
-	sdramc_initialize(ATMEL_BASE_CS1, &setting);
-}
-#endif
-
 int g_dnl_bind_fixup(struct usb_device_descriptor *dev, const char *name)
 {
 	g_dnl_set_serialnumber("1");
