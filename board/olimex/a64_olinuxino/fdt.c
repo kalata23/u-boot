@@ -67,7 +67,7 @@ static int board_fix_ethernet(void *blob)
 }
 
 #ifdef CONFIG_VIDEO_LCD_OLINUXINO_PANEL
-static int board_fix_lcd_olinuxino_rgb(void *blob)
+static int __maybe_unused board_fix_lcd_olinuxino_rgb(void *blob)
 {
 	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
 
@@ -374,7 +374,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 }
 
 
-static int board_fix_lcd_olinuxino_ts(void *blob)
+static int __maybe_unused board_fix_lcd_olinuxino_ts(void *blob)
 {
 	uint32_t i2c_pins_phandle;
 	uint32_t pinctrl_phandle;
@@ -477,7 +477,7 @@ static int board_fix_lcd_olinuxino_ts(void *blob)
 	prop[0] = cpu_to_fdt32(pinctrl_phandle);
 	prop[1] = cpu_to_fdt32(7);
 	prop[2] = cpu_to_fdt32(8);
-	prop[3] = cpu_to_fdt32((id == 8630) ? 1 : 0);
+	prop[3] = cpu_to_fdt32((id == 8630));
 
 	ret |= fdt_setprop(blob, offset, "reset-gpios", prop, sizeof(fdt32_t) * 4);
 
@@ -549,10 +549,9 @@ recover:
 
 #if defined(CONFIG_OF_BOARD_FIXUP)
 /**
- * get_timings() - Get display timings from panel.
+ * board_fix_fdt() - Fix fdt before relocation.
  *
- * @dev:	Panel device containing the display timings
- * @tim:	Place to put timings
+ * @blob:	Pointer to FDT offset
  * @return 0 if OK, -ve on error
  */
 int board_fix_fdt(void *blob)
