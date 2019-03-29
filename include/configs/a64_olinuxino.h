@@ -179,7 +179,6 @@
 
 
 /* I2C */
-#define CONFIG_SYS_I2C_MVTWSI
 #ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_SPEED		400000
