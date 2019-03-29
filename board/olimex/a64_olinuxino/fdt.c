@@ -403,6 +403,14 @@ static int __maybe_unused board_fix_lcd_olinuxino_ts(void *blob)
 	    id != 9284)		/* LCD-OLinuXino-10CTS */
 		return 0;
 
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
+	if (offset < 0)
+		return offset;
+
+	pinctrl_phandle = fdt_create_phandle(blob, offset);
+	if (!pinctrl_phandle)
+		return -1;
+
 	offset = fdt_path_offset(blob, "/soc/i2c@1c2ac00");
 	if (offset < 0)
 		return offset;
@@ -436,6 +444,8 @@ static int __maybe_unused board_fix_lcd_olinuxino_ts(void *blob)
 		ret |= fdt_setprop_u32(blob, offset, "reg", 0x38);
 		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-x", 800);
 		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
+		if (ret)
+			return ret;
 	} else {
 		if (id == 9278) {
 			offset = fdt_add_subnode(blob, offset, "gt911@14");
@@ -447,39 +457,40 @@ static int __maybe_unused board_fix_lcd_olinuxino_ts(void *blob)
 			offset = fdt_add_subnode(blob, offset, "gt928@14");
 			if (offset < 0)
 				return offset;
-
 			ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt928");
 		}
 		ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
+		if (ret)
+			return ret;
 	}
 
-	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
-	if (offset < 0)
-		return offset;
-
-	pinctrl_phandle = fdt_create_phandle(blob, offset);
-	if (!pinctrl_phandle)
-		return -1;
-
 	ret = fdt_setprop_u32(blob, offset, "interrupt-parent", pinctrl_phandle);
+	if (ret)
+		return ret;
 
 	prop[0] = cpu_to_fdt32(7);
 	prop[1] = cpu_to_fdt32(7);
 	prop[2] = cpu_to_fdt32(2);
-	ret |= fdt_setprop(blob, offset, "interrupts", prop, sizeof(fdt32_t) * 3);
+	ret = fdt_setprop(blob, offset, "interrupts", prop, sizeof(fdt32_t) * 3);
+	if (ret)
+		return ret;
 
 	prop[0] = cpu_to_fdt32(pinctrl_phandle);
 	prop[1] = cpu_to_fdt32(7);
 	prop[2] = cpu_to_fdt32(7);
 	prop[3] = cpu_to_fdt32(0);
-	ret |= fdt_setprop(blob, offset, "irq-gpios", prop, sizeof(fdt32_t) * 4);
+	ret = fdt_setprop(blob, offset, "irq-gpios", prop, sizeof(fdt32_t) * 4);
+	if (ret)
+		return ret;
 
 	prop[0] = cpu_to_fdt32(pinctrl_phandle);
 	prop[1] = cpu_to_fdt32(7);
 	prop[2] = cpu_to_fdt32(8);
 	prop[3] = cpu_to_fdt32((id == 8630));
 
-	ret |= fdt_setprop(blob, offset, "reset-gpios", prop, sizeof(fdt32_t) * 4);
+	ret = fdt_setprop(blob, offset, "reset-gpios", prop, sizeof(fdt32_t) * 4);
+	if (ret)
+		return ret;
 
 	if (id == 9278)
 		ret |= fdt_setprop_empty(blob, offset, "touchscreen-swapped-x-y");
@@ -514,8 +525,8 @@ int ft_system_setup(void *blob, bd_t *bd)
 	recovery = malloc(gd->fdt_size);
 	memcpy(recovery, blob, gd->fdt_size);
 
-	/* Increase FDT blob size by 16KiB */
-	ret = fdt_increase_size(blob, 16384);
+	/* Increase FDT blob size by 4KiB */
+	ret = fdt_increase_size(blob, 4096);
 	if (ret)
 		return ret;
 

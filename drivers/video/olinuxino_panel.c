@@ -207,8 +207,8 @@ static int olinuxino_panel_probe(struct udevice *dev)
 {
 	struct olinuxino_panel_priv *priv = dev_get_priv(dev);
 	struct udevice *chip;
+	u32 crc, i, id = env_get_ulong("lcd_olinuxino", 10, 0);
 	int ret;
-	u32 crc;
 
 	memset((u8 *)&priv->eeprom, 0, 256);
 
@@ -217,7 +217,7 @@ static int olinuxino_panel_probe(struct udevice *dev)
 	 * function. Otherwise, get lcd_olinuxino env variable and try
 	 * manual timing setting.
 	 */
-	if (device_get_uclass_id(dev->parent) == UCLASS_I2C) {
+	if (device_get_uclass_id(dev->parent) == UCLASS_I2C && id == 0) {
 		ret = dm_i2c_probe(dev->parent, 0x50, 0, &chip);
 		if (ret)
 			return -ENODEV;
@@ -245,9 +245,6 @@ static int olinuxino_panel_probe(struct udevice *dev)
 		       priv->eeprom.revision,
 		       priv->eeprom.serial);
 	} else {
-		u32 id = env_get_ulong("lcd_olinuxino", 10, 0);
-		u32 i;
-
 		if (!id)
 			return -ENODEV;
 
