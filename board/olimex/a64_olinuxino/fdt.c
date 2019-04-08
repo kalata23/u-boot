@@ -1,4 +1,3 @@
-#define DEBUG
 #include <common.h>
 #include <dm.h>
 #include <fdt_support.h>
@@ -90,13 +89,14 @@ static int __maybe_unused board_fix_lcd_olinuxino_rgb(void *blob)
 		return 0;
 
 	/* If LCD is not present after relocation, skip FDT modifications */
-	if (gd->flags & GD_FLG_RELOC)
-		if (!lcd_olinuxino_is_present())
+	if (gd->flags & GD_FLG_RELOC) {
+		if (!lcd_olinuxino_is_present()) {
+			debug("LCD-OLinuxino not pressent. Skipping!\n");
 			return 0;
+		}
+	}
 	/**
 	 * &pwm {
-	 * 	pinctrl-names = "default";
-	 *	pinctrl-0 = <&pwm0_pins_a>;
 	 *	status = "okay";
 	 * };
 	 */
@@ -393,8 +393,10 @@ static int __maybe_unused board_fix_lcd_olinuxino_ts(void *blob)
 	 * Check if there is LCD attached.
 	 * If so based on its ID enable different touchscreen.
 	 */
-	if (!lcd_olinuxino_is_present())
+	if (!lcd_olinuxino_is_present()) {
+		debug("LCD-OLinuxino not pressent. Skipping!\n");
 		return 0;
+	}
 
 	id = lcd_olinuxino_id();
 
