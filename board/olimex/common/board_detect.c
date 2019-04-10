@@ -8,6 +8,7 @@
 #include <i2c.h>
 #include <mmc.h>
 #include <spl.h>
+#include <asm/arch/spl.h>
 
 #include "board_detect.h"
 

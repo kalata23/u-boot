@@ -197,9 +197,11 @@ struct lcd_olinuxino_eeprom lcd_olinuxino_eeprom;
 
 static int lcd_olinuxino_eeprom_read(void)
 {
-	struct udevice *bus, *chip;
 	uint32_t crc;
 	int ret;
+
+#ifdef CONFIG_DM_I2C
+	struct udevice *bus, *chip;
 
 	ret = uclass_get_device_by_seq(UCLASS_I2C, LCD_OLINUXINO_EEPROM_BUS, &bus);
 	if (ret)
@@ -212,6 +214,19 @@ static int lcd_olinuxino_eeprom_read(void)
 	ret = dm_i2c_read(chip, 0x00, (uint8_t *)&lcd_olinuxino_eeprom, 256);
 	if (ret)
 		return ret;
+#else
+	ret = i2c_set_bus_num(LCD_OLINUXINO_EEPROM_BUS);
+	if (ret)
+		return ret;
+
+	ret = i2c_probe(LCD_OLINUXINO_EEPROM_ADDRESS);
+	if (ret)
+		return ret;
+
+	ret = i2c_read(LCD_OLINUXINO_EEPROM_ADDRESS, 0, 1, (uint8_t *)&lcd_olinuxino_eeprom, 256);
+	if (ret)
+		return ret;
+#endif
 
 	if (lcd_olinuxino_eeprom.header != LCD_OLINUXINO_HEADER_MAGIC)
 		goto error;

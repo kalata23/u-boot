@@ -717,8 +717,8 @@ int misc_init_r(void)
 	/* Setup environment */
 	setup_environment(gd->fdt_blob);
 
-#ifdef CONFIG_USB_GADGET
-	ret = uclass_first_device(UCLASS_USB_DEV_GENERIC, &dev);
+#ifdef CONFIG_USB_MUSB_GADGET
+	ret = uclass_first_device(UCLASS_USB_GADGET_GENERIC, &dev);
 	if (!dev || ret) {
 		printf("No USB device found\n");
 		return 0;
