@@ -58,8 +58,6 @@ CONFIG_CMD_MTDPARTS=y
 CONFIG_MTDIDS_DEFAULT="nor0=nor.0"
 CONFIG_MTDPARTS_DEFAULT="mtdparts=nor.0:2m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
 
-
-CONFIG_DM_MMC=y
 CONFIG_DM_SCSI=y
 CONFIG_SCSI_AHCI=y
 
