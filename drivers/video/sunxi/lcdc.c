@@ -13,7 +13,9 @@
 #include <asm/arch/lcdc.h>
 #include <asm/io.h>
 
+#ifdef LCD_OLINUXINO
 #include "../../../board/olimex/common/lcd_olinuxino.h"
+#endif
 
 static int lcdc_get_clk_delay(const struct display_timing *mode, int tcon)
 {
@@ -46,7 +48,7 @@ void lcdc_init(struct sunxi_lcdc_reg * const lcdc)
 void lcdc_enable(struct sunxi_lcdc_reg * const lcdc, int depth)
 {
 	setbits_le32(&lcdc->ctrl, SUNXI_LCDC_CTRL_TCON_ENABLE);
-#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#ifdef LCD_OLINUXINO
 	if (lcd_olinuxino_interface() != LCD_OLINUXINO_IF_LVDS)
 		return;
 
@@ -99,7 +101,7 @@ void lcdc_tcon0_mode_set(struct sunxi_lcdc_reg * const lcdc,
 			 int clk_div, bool for_ext_vga_dac,
 			 int depth, int dclk_phase)
 {
-#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#ifdef LCD_OLINUXINO
 	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
 #endif
 	int bp, clk_delay, total, val, ch = 0;
@@ -130,7 +132,7 @@ void lcdc_tcon0_mode_set(struct sunxi_lcdc_reg * const lcdc,
 	writel(SUNXI_LCDC_TCON0_TIMING_V_TOTAL(total) |
 	       SUNXI_LCDC_TCON0_TIMING_V_BP(bp), &lcdc->tcon0_timing_v);
 
-#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#ifdef LCD_OLINUXINO
 	if (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_PARALLEL) {
 		writel(SUNXI_LCDC_X(mode->hsync_len.typ) |
 		       SUNXI_LCDC_Y(mode->vsync_len.typ), &lcdc->tcon0_timing_sync);
@@ -270,7 +272,7 @@ void lcdc_pll_set(struct sunxi_ccm_reg *ccm, int tcon, int dotclock,
 #endif
 
 	if (tcon == 0) {
-#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#ifdef LCD_OLINUXINO
 	if (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_PARALLEL) {
 		min_m = 6;
 		max_m = 127;

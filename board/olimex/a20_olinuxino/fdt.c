@@ -20,98 +20,7 @@
 #include "../common/board_detect.h"
 #include "../common/boards.h"
 
-#define FDT_PATH_ROOT		"/"
-#define FDT_PATH_ALIASES	"/aliases"
-#define FDT_PATH_VCC5V0		"/vcc5v0"
-
-#define FDT_COMP_PINCTRL	"allwinner,sun7i-a20-pinctrl"
-#define FDT_COMP_CCU		"allwinner,sun7i-a20-ccu"
-
-enum devices {
-	PATH_I2C2 = 0,
-	PATH_NAND,
-	PATH_SPI0,
-	PATH_PWM,
-	PATH_TCON0,
-	PATH_RTP,
-};
-
-#define FDT_PATH(__name, __addr) \
-{ \
-	.name = __name, \
-	.addr = __addr, \
-}
-
-struct __path {
-	char name[16];
-	uint32_t addr;
-} paths[] = {
-	FDT_PATH("i2c",			0x01c2b400),
-	FDT_PATH("nand",		0x01c03000),
-	FDT_PATH("spi",			0x01c05000),
-	FDT_PATH("pwm",			0x01c20e00),
-	FDT_PATH("lcd-controller",	0x01c0c000),
-	FDT_PATH("rtp",			0x01c25000),
-};
-
-#define MTD_PART(__label, __start, __lenght) \
-	{ \
-		.label = __label, \
-		.addr = __start, \
-		.lenght = __lenght \
-	}
-
-struct mtd_partition {
-	char label[32];
-	uint32_t addr;
-	uint32_t lenght;
-
-};
-
-struct mtd_partition nand_partitions[] = {
-	MTD_PART("NAND.rootfs",			0x02C00000,	0xFD400000),	/* TODO: Actually check nand size! */
-	MTD_PART("NAND.kernel",			0x01C00000,	SZ_16M),
-	MTD_PART("NAND.dtb",			0x01800000,	SZ_4M),
-	MTD_PART("NAND.u-boot-env.backup",	0x01400000,	SZ_4M),
-	MTD_PART("NAND.u-boot-env",		0x01000000,	SZ_4M),
-	MTD_PART("NAND.u-boot.backup",		0x00C00000,	SZ_4M),
-	MTD_PART("NAND.u-boot",			0x00800000,	SZ_4M),
-	MTD_PART("NAND.SPL.backup",		0x00400000,	SZ_4M),
-	MTD_PART("NAND.SPL",			0x00000000,	SZ_4M),
-};
-
-struct mtd_partition spi_partitions[] = {
-	MTD_PART("SPI.user",			0x00240000,	0x00DC0000),
-	MTD_PART("SPI.u-boot-env.backup",	0x00220000,	SZ_128K),
-	MTD_PART("SPI.u-boot-env",		0x00200000,	SZ_128K),
-	MTD_PART("SPI.u-boot",			0x00000000,	SZ_2M),
-};
-
 DECLARE_GLOBAL_DATA_PTR;
-
-static int get_path_offset(void *blob, enum devices dev, char *dpath)
-{
-	char path[64];
-	int offset;
-
-	sprintf(path, "/soc@1c00000/%s@%x", paths[dev].name, paths[dev].addr);
-	offset = fdt_path_offset(blob, path);
-	if (offset >= 0)
-		goto success;
-
-	sprintf(path, "/soc@01c00000/%s@%08x", paths[dev].name, paths[dev].addr);
-	offset = fdt_path_offset(blob, path);
-	if (offset >= 0)
-		goto success;
-
-	printf("Path \"%s\" not found: %s (%d)\n", path, fdt_strerror(offset), offset);
-	return offset;
-
-success:
-	if (dpath != NULL)
-		strcpy(dpath, path);
-	return offset;
-}
 
 static int board_fix_model(void *blob)
 {
@@ -119,7 +28,7 @@ static int board_fix_model(void *blob)
 	int ret;
 	char temp[10];
 
-	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+	offset = fdt_path_offset(blob, "/");
 	if (offset < 0)
 		return offset;
 
@@ -138,6 +47,7 @@ static int board_fix_model(void *blob)
 	return ret;
 
 }
+
 static int board_fix_atecc508a(void *blob)
 {
 	int offset;
@@ -158,7 +68,7 @@ static int board_fix_atecc508a(void *blob)
 	 *         reg = <0x60>;
 	 * };
 	 */
-	offset = get_path_offset(blob, PATH_I2C2, NULL);
+	offset = fdt_path_offset(blob, "/soc@1c00000/i2c@1c2b400");
  	if (offset < 0)
  		return offset;
 
@@ -174,24 +84,19 @@ static int board_fix_atecc508a(void *blob)
 
 static int board_fix_spi_flash(void *blob)
 {
-	char partition_name[64];
-	char path[64];
-	int offset, parent, ret = 0;
 	uint32_t phandle;
-	uint8_t i;
-	fdt32_t reg[2];
-
+	int offset, ret = 0;
 
 	/**
 	 * Some boards, have both eMMC and SPI flash
 	 */
-	 if (!olimex_board_has_spi())
+	if (!olimex_board_has_spi())
 		return 0;
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
 	 * Add following properties:
-	 *     spi0@1 {
+	 *     spi0-pc-pins {
 	 *         pins = "PC0", "PC1", "PC2", "PC23";
 	 *         function = "spi0";
 	 *     };
@@ -200,11 +105,11 @@ static int board_fix_spi_flash(void *blob)
 	 * fdt print /soc@01c00000/pinctrl@01c20800/spi0@1
 	 */
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
 	if (offset < 0)
 		return offset;
 
-	offset = fdt_add_subnode(blob, offset, "spi0@1");
+	offset = fdt_add_subnode(blob, offset, "spi0-pc-pins");
 	if (offset < 0)
 		return offset;
 
@@ -233,7 +138,7 @@ static int board_fix_spi_flash(void *blob)
 	 * Test:
 	 * fdt print /soc@01c00000/spi@01c05000
 	 */
-	offset = get_path_offset(blob, PATH_SPI0, path);
+	offset = fdt_path_offset(blob, "/soc/spi@1c05000");
  	if (offset < 0)
  		return offset;
 
@@ -271,60 +176,27 @@ static int board_fix_spi_flash(void *blob)
 	if (ret < 0)
 		return ret;
 
-	offset = fdt_add_subnode(blob, offset, "partitions");
-	if (offset < 0)
-		return offset;
-	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 1);
-	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
-	ret |= fdt_setprop_string(blob, offset, "compatible", "fixed-partitions");
-
-	parent = offset;
-
-	/* Add partitions */
-	for (i = 0; i < ARRAY_SIZE(spi_partitions); i++) {
-
-		sprintf(partition_name, "partition@%x", spi_partitions[i].addr);
-		offset = fdt_add_subnode(blob, parent, partition_name);
-		if (offset < 0) {
-			printf("Failed to add %s: %s (%d)\n", partition_name, fdt_strerror(offset), offset);
-			return offset;
-		}
-
-
-		reg[0] = cpu_to_fdt32(spi_partitions[i].addr);
-		reg[1] = cpu_to_fdt32(spi_partitions[i].lenght);
-
-		ret |= fdt_setprop_string(blob, offset, "label" , spi_partitions[i].label);
-		ret |= fdt_setprop(blob, offset, "reg", reg, sizeof(reg));
-		if (ret < 0)
-			return ret;
-	}
-
-
+	/* Aliases should be modified only before relocation */
+	if (!gd->flags & GD_FLG_RELOC)
+		return 0;
 	/*
 	 * Add alias property
 	 *
 	 * fdt print /aliases
 	 *     spi0 = "/soc@01c00000/spi@01c05000"
 	 */
-	offset = fdt_path_offset(blob, FDT_PATH_ALIASES);
+	offset = fdt_path_offset(blob, "/aliases");
 	if (offset < 0)
 		return offset;
 
-	ret = fdt_setprop_string(blob, offset, "spi0", path);
-	if (ret < 0)
-		return ret;
-
-	return 0;
+	return fdt_setprop_string(blob, offset, "spi0", "/soc/spi@1c05000");
 }
 
 static int board_fix_nand(void *blob)
 {
-	char partition_name[64];
-	int offset, parent;
+	int offset;
 	uint32_t phandle;
 	int ret = 0;
-	uint8_t i;
 
 	/* Modify only boards with nand storage */
 	if (eeprom->config.storage != 'n')
@@ -344,11 +216,11 @@ static int board_fix_nand(void *blob)
 	 * fdt print /soc@01c00000/pinctrl@01c20800/nand0@0
 	 */
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
 	if (offset < 0)
 		return offset;
 
- 	offset = fdt_add_subnode(blob, offset, "nand0@0");
+ 	offset = fdt_add_subnode(blob, offset, "nand-pins");
  	if (offset < 0)
  		return offset;
 
@@ -390,7 +262,7 @@ static int board_fix_nand(void *blob)
 	 * fdt print /soc@01c00000/nand@01c03000
 	 */
 
-	offset = get_path_offset(blob, PATH_NAND, NULL);
+	offset = fdt_path_offset(blob, "/soc/nand@1c03000");
  	if (offset < 0)
  		return offset;
 
@@ -410,55 +282,6 @@ static int board_fix_nand(void *blob)
 	 *     allwinner,rb = <0>;
 	 *     nand-ecc-mode = "hw";
 	 *     nand-on-flash-bbt;
-	 *     partitions {
-	 *         compatible = "fixed-partitions";
-	 *         #address-cells = <2>;
-	 *         #size-cells = <2>;
-	 *
-	 *         partition@0 {
-	 *             label = "NAND.SPL";
-	 *             reg = <0x0 0x0 0x0 0x400000>;
-	 *         };
-	 *
-	 *         partition@400000 {
-	 *             label = "SPL.backup";
-	 *             reg = <0x0 0x400000 0x0 0x400000>;
-	 *         };
-	 *
-	 *         partition@800000 {
-	 *             label = "NAND.u-boot";
-	 *             reg = <0x0 0x800000 0x0 0x400000>;
-	 *         };
-	 *
-	 *         partition@c00000 {
-	 *             label = "NAND.u-boot.backup";
-	 *             reg = <0x0 0xc00000 0x0 0x400000>;
-	 *         };
-	 *
-	 *         partition@1000000 {
-	 *             label = "NAND.u-boot-env";
-	 *             reg = <0x0 0x1000000 0x0 0x400000>;
-	 *         };
-	 *
-	 *         partition@1400000 {
-	 *             label = "NAND.u-boot-env.backup";
-	 *             reg = <0x0 0x1400000 0x0 0x400000>;
-	 *         };
-	 *
-	 *         partition@1800000 {
-	 *             label = "NAND.dtb";
-	 *             reg = <0x0 0x1800000 0x0 0x400000>;
-	 *         };
-	 *
-	 *         partition@1c00000 {
-	 *             label = "NAND.kernel";
-	 *             reg = <0x0 0x1c00000 0x0 0x1000000>;
-	 *         };
-
-	 *         partition@2c00000 {
-	 *             label = "NAND.rootfs";
-	 *             reg = <0x0 0x2c00000 0x0 0xfd400000>;
-	 *         };
 	 *    }
 	 */
 	offset = fdt_add_subnode(blob, offset, "nand@0");
@@ -469,42 +292,7 @@ static int board_fix_nand(void *blob)
 	ret |= fdt_setprop_string(blob, offset, "nand-ecc-mode", "hw");
 	ret |= fdt_setprop_u32(blob, offset, "allwinner,rb", 0);
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
-	if (ret < 0)
-		return ret;
-
-	offset = fdt_add_subnode(blob, offset, "partitions");
-	if (offset < 0)
-		return offset;
-
-	ret |= fdt_setprop_string(blob, offset, "compatible" , "fixed-partitions");
-	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 2);
-	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 2);
-	if (ret < 0)
-		return ret;
-
-	parent = offset;
-
-	/* Add partitions */
-	for (i = 0; i < ARRAY_SIZE(nand_partitions); i++) {
-
-		sprintf(partition_name, "partition@%x", nand_partitions[i].addr);
-		offset = fdt_add_subnode(blob, parent, partition_name);
-		if (offset < 0) {
-			printf("Failed to add %s: %s (%d)\n", partition_name, fdt_strerror(offset), offset);
-			return offset;
-		}
-
-		fdt64_t path[2];
-		path[0] = cpu_to_fdt64(nand_partitions[i].addr);
-		path[1] = cpu_to_fdt64(nand_partitions[i].lenght);
-
-		ret |= fdt_setprop_string(blob, offset, "label" , nand_partitions[i].label);
-		ret |= fdt_setprop(blob, offset, "reg", path, sizeof(path));
-		if (ret < 0)
-			return ret;
-	}
-
-	return 0;
+	return ret;
 }
 
 static int (*olinuxino_fixes[]) (void *blob) = {
@@ -557,7 +345,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	int offset;
 	int ret = 0;
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
  	if (offset < 0)
  		return offset;
 
@@ -565,7 +353,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	if (pinctrl_phandle < 0)
  		return offset;
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_CCU);
+	offset = fdt_path_offset(blob, "/soc/clock@1c20000");
  	if (offset < 0)
  		return offset;
 
@@ -574,7 +362,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
  		return offset;
 
 
-	offset = fdt_path_offset(blob, FDT_PATH_VCC5V0);
+	offset = fdt_path_offset(blob, "/vcc5v0");
  	if (offset < 0)
  		return offset;
 
@@ -590,15 +378,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	 * };
 	 */
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
-	if (offset < 0)
-		return offset;
-
-	pinctrl_phandle = fdt_get_phandle(blob, offset);
-	if (pinctrl_phandle < 0)
-		return offset;
-
-	offset = fdt_subnode_offset(blob, offset, "pwm0@0");
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/pwm0-pin");
 	if (offset < 0)
 		return offset;
 
@@ -606,8 +386,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	if (!pins_phandle[0])
 		return -1;
 
-
-	offset = get_path_offset(blob, PATH_PWM, NULL);
+	offset = fdt_path_offset(blob, "/soc/pwm@1c20e00");
 	if (offset < 0)
 		return offset;
 
@@ -631,7 +410,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	 * };
 	 */
 
-	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+	offset = fdt_path_offset(blob, "/");
 	if (offset < 0)
 		return offset;
 
@@ -673,7 +452,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	 * };
 	 */
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
  	if (offset < 0)
  		return offset;
 
@@ -698,7 +477,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	if (ret < 0)
  		return ret;
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
  	if (offset < 0)
  		return offset;
 
@@ -773,7 +552,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	 * };
 	 */
 
-	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+	offset = fdt_path_offset(blob, "/");
 	if (offset < 0)
 		return offset;
 
@@ -868,7 +647,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	* };
 	*/
 
-	offset = get_path_offset(blob, PATH_TCON0, NULL);
+	offset = fdt_path_offset(blob, "/soc/lcd-controller@1c0c000");
   	if (offset < 0)
   		return offset;
 
@@ -924,7 +703,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	uint32_t panel_endpoint_phandle;
 	uint32_t pinctrl_phandle;
 	uint32_t pins_phandle;
-	uint32_t power_supply_phandle;
 	uint32_t pwm_phandle;
 	uint32_t tcon0_endpoint_phandle;
 
@@ -935,15 +713,14 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	int gpio;
 	int i;
 	int offset;
-	char path[64];
 	int ret = 0;
 
-	offset = fdt_path_offset(blob, FDT_PATH_VCC5V0);
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
  	if (offset < 0)
  		return offset;
 
-	power_supply_phandle = fdt_get_phandle(blob, offset);
-	if (power_supply_phandle < 0)
+	pinctrl_phandle = fdt_get_phandle(blob, offset);
+	if (pinctrl_phandle < 0)
  		return offset;
 
 	/**
@@ -954,23 +731,15 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 * };
 	 */
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/pwm0-pin");
  	if (offset < 0)
  		return offset;
 
-	pinctrl_phandle = fdt_get_phandle(blob, offset);
-	if (pinctrl_phandle < 0)
- 		return offset;
+ 	pins_phandle = fdt_create_phandle(blob, offset);
+ 	if (!pins_phandle)
+ 		return -1;
 
-	offset = fdt_subnode_offset(blob, offset, "pwm0@0");
-	if (offset < 0)
-		return offset;
-
-	pins_phandle = fdt_create_phandle(blob, offset);
-	if (!pins_phandle)
-		return -1;
-
-	offset = get_path_offset(blob, PATH_PWM, NULL);
+	offset = fdt_path_offset(blob, "/soc/pwm@1c20e00");
   	if (offset < 0)
   		return offset;
 
@@ -994,7 +763,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 * };
 	 */
 
-	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+	offset = fdt_path_offset(blob, "/");
  	if (offset < 0)
  		return offset;
 
@@ -1012,7 +781,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 		levels[i] = cpu_to_fdt32(i * 10);
 	ret |= fdt_setprop(blob, offset, "brightness-levels", levels, sizeof(levels));
 	ret |= fdt_setprop_u32(blob, offset, "default-brightness-level", 10);
-	ret |= fdt_setprop_u32(blob, offset, "power-supply", power_supply_phandle);
 	ret |= fdt_setprop_string(blob, offset, "compatible", "pwm-backlight");
 	if (ret < 0)
 		return ret;
@@ -1033,7 +801,8 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 * };
 	 */
 
-	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
  	if (offset < 0)
  		return offset;
 
@@ -1111,7 +880,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 */
 
 	if (!lcd) {
-		offset = get_path_offset(blob, PATH_I2C2, path);
+		offset = fdt_path_offset(blob, "/soc/i2c@1c2b400");
 	  	if (offset < 0)
 	  		return offset;
 
@@ -1119,8 +888,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 		if (offset < 0)
 			return offset;
 	} else {
-		path[0] = 0;
-		offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+		offset = fdt_path_offset(blob, "/");
 		if (offset < 0)
 			return offset;
 
@@ -1136,7 +904,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 		ret |= fdt_setprop_u32(blob, offset, "reg", 0x50);
 	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", pins_phandle);
-	ret |= fdt_setprop_u32(blob, offset, "power-supply", power_supply_phandle);
 	ret |= fdt_setprop_u32(blob, offset, "backlight", backlight_phandle);
 
 	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
@@ -1162,6 +929,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	offset = fdt_add_subnode(blob, offset, "endpoint@0");
 	if (offset < 0)
 		return offset;
+
 	ret = fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
@@ -1186,17 +954,9 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	* };
 	*/
 
-	offset = get_path_offset(blob, PATH_TCON0, NULL);
+	offset = fdt_path_offset(blob, "/soc/lcd-controller@1c0c000/ports/port@1");
   	if (offset < 0)
   		return offset;
-
-	offset = fdt_subnode_offset(blob, offset, "ports");
-	if (offset < 0)
-		return offset;
-
-	offset = fdt_subnode_offset(blob, offset, "port@1");
-	if (offset < 0)
-		return offset;
 
 	offset = fdt_add_subnode(blob, offset, "endpoint@0");
 	if (offset < 0)
@@ -1225,11 +985,10 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 		return -1;
 
 	if (!lcd)
-		strcat(path, "/panel@50/port@0/endpoint@0");
+		offset = fdt_path_offset(blob, "/soc/i2c@1c2b400/panel@50/port@0/endpoint@0");
 	else
-		strcat(path, "/panel/port@0/endpoint@0");
+		offset = fdt_path_offset(blob, "/panel/port@0/endpoint@0");
 
-	offset = fdt_path_offset(blob, path);
 	if (offset < 0)
 		return offset;
 
@@ -1244,7 +1003,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	    lcd->id == 9278 ||					/* LCD-OLinuXino-7CTS */
 	    lcd->id == 9284))) {				/* LCD-OLinuXino-10CTS */
 
-		offset = get_path_offset(blob, PATH_I2C2, path);
+		offset = fdt_path_offset(blob, "/soc/i2c@1c2b400");
 		if (offset < 0)
 			return offset;
 
@@ -1303,7 +1062,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 
 	} else {
 		/* Enable SUN4I-TS */
-		offset = get_path_offset(blob, PATH_RTP, NULL);
+		offset = fdt_path_offset(blob, "/soc/rtp@1c25000");
 		if (offset < 0)
 			return offset;
 
@@ -1332,12 +1091,13 @@ int board_fix_fdt(void *blob)
 #if defined(CONFIG_OF_SYSTEM_SETUP)
 int ft_system_setup(void *blob, bd_t *bd)
 {
-	int ret = 0;
+	size_t blob_size = gd->fdt_size;
 	void *recovery;
+	int ret = 0;
 
-#if defined(CONFIG_FDT_FIXUP_PARTITIONS) && defined(CONFIG_NAND)
+#if CONFIG_FDT_FIXUP_PARTITIONS
 	static struct node_info nodes[] = {
-		{ "fixed-partitions", MTD_DEV_TYPE_NOR, },
+		{ "jedec,spi-nor", MTD_DEV_TYPE_NOR, },
 	};
 #endif
 
@@ -1346,23 +1106,20 @@ int ft_system_setup(void *blob, bd_t *bd)
 		return 0;
 
 	/* First make copy of the current ftd blob */
-	recovery = malloc(gd->fdt_size);
-	memcpy(recovery, blob, gd->fdt_size);
+	recovery = malloc(blob_size);
+	memcpy(recovery, blob, blob_size);
 
 	/* Execute fixups */
-	printf("Executing fdt system setup...\n");
 	ret = olinuxino_fdt_fixup(blob);
 	if (ret < 0)
 		goto exit_recover;
 
-#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#ifdef LCD_OLINUXINO
 	/* Check if lcd is the default monitor */
-	char *s = env_get("monitor");
-	uint32_t id;
-	if (s != NULL && !strncmp(s, "lcd", 3)) {
+	if (lcd_olinuxino_is_present()) {
 
 		/* Check RGB or LVDS mode should be enabled */
-		id = env_get_ulong("lcd_olinuxino", 10, 0);
+		uint32_t id = env_get_ulong("lcd_olinuxino", 10, 0);
 		if (id == 7894 || id == 7891)
 			ret = board_fix_lcd_olinuxino_lvds(blob);
 		else
@@ -1370,20 +1127,20 @@ int ft_system_setup(void *blob, bd_t *bd)
 
 		if (ret < 0)
 			goto exit_recover;
-		}
+
+	}
 #endif
 
-#if defined(CONFIG_FDT_FIXUP_PARTITIONS) && defined(CONFIG_NAND)
-	if (eeprom->config.storage == 'n')
-		fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
-
+#if CONFIG_FDT_FIXUP_PARTITIONS
+	if (olimex_board_has_spi())
+		fdt_fixup_mtdparts(blob, &nodes[0], 1);
 #endif
 	return 0;
 
 exit_recover:
 	/* Copy back revocery blob */
 	printf("Recovering the FDT blob...\n");
-	memcpy(blob, recovery, gd->fdt_size);
+	memcpy(blob, recovery, blob_size);
 
 	return 0;
 }

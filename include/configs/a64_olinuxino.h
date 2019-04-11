@@ -186,7 +186,6 @@
 #endif
 
 #define CONFIG_VIDEO_LCD_I2C_BUS	-1 /* NA, but necessary to compile */
-#define LCD_OLINUXINO
 #define LCD_OLINUXINO_EEPROM_BUS	0
 
 
