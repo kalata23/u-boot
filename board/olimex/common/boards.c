@@ -90,6 +90,11 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(9613, "A20-OLinuXino-LIME2-e4Gs16M", "sun7i-a20-olinuxino-lime2-emmc.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(4), GBYTES(1), COM)
 	},
+	{
+		OLINUXINO_BOARD(9905, "A20-OLinuXino-LIME2-G2", "sun7i-a20-olinuxino-lime2.dtb")
+		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), COM)
+	},
+
 
 	/* T2-OLinuXino-Lime2 */
 	{
