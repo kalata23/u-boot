@@ -68,7 +68,7 @@ static int board_fix_atecc508a(void *blob)
 	 *         reg = <0x60>;
 	 * };
 	 */
-	offset = fdt_path_offset(blob, "/soc@1c00000/i2c@1c2b400");
+	offset = fdt_path_offset(blob, "/soc/i2c@1c2b400");
  	if (offset < 0)
  		return offset;
 
