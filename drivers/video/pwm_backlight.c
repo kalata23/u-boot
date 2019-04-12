@@ -211,7 +211,8 @@ static int pwm_backlight_ofdata_to_platdata(struct udevice *dev)
 		return log_msg_ret("Not enough arguments to pwm\n", -EINVAL);
 	priv->channel = args.args[0];
 	priv->period_ns = args.args[1];
-	priv->polarity = args.args[2];
+	if (args.args_count > 2)
+		priv->polarity = args.args[2];
 
 	index = dev_read_u32_default(dev, "default-brightness-level", 255);
 	cell = dev_read_prop(dev, "brightness-levels", &len);
