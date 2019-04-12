@@ -292,6 +292,16 @@ static int board_fix_nand(void *blob)
 	ret |= fdt_setprop_string(blob, offset, "nand-ecc-mode", "hw");
 	ret |= fdt_setprop_u32(blob, offset, "allwinner,rb", 0);
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
+	if (ret < 0)
+		return ret;
+
+	offset = fdt_add_subnode(blob, offset, "partitions");
+	if (offset < 0)
+		return offset;
+
+	ret |= fdt_setprop_string(blob, offset, "compatible" , "fixed-partitions");
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 2);
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 2);
 	return ret;
 }
 
@@ -456,7 +466,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
  	if (offset < 0)
  		return offset;
 
-	offset = fdt_add_subnode(blob, offset, "lcd0_lvds0_pins@0");
+	offset = fdt_add_subnode(blob, offset, "lcd0_lvds0_pins");
 	if (offset < 0)
 		return offset;
 
@@ -481,7 +491,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
  	if (offset < 0)
  		return offset;
 
-	offset = fdt_add_subnode(blob, offset, "lcd0_lvds1_pins@0");
+	offset = fdt_add_subnode(blob, offset, "lcd0_lvds1_pins");
 	if (offset < 0)
 		return offset;
 
@@ -806,7 +816,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
  	if (offset < 0)
  		return offset;
 
-	offset = fdt_add_subnode(blob, offset, "lcd0_rgb888_pins@0");
+	offset = fdt_add_subnode(blob, offset, "lcd0_rgb888_pins");
 	if (offset < 0)
 		return offset;
 
@@ -1098,6 +1108,7 @@ int ft_system_setup(void *blob, bd_t *bd)
 #if CONFIG_FDT_FIXUP_PARTITIONS
 	static struct node_info nodes[] = {
 		{ "jedec,spi-nor", MTD_DEV_TYPE_NOR, },
+		{ "fixed-partitions", MTD_DEV_TYPE_NAND },
 	};
 #endif
 
@@ -1132,8 +1143,7 @@ int ft_system_setup(void *blob, bd_t *bd)
 #endif
 
 #if CONFIG_FDT_FIXUP_PARTITIONS
-	if (olimex_board_has_spi())
-		fdt_fixup_mtdparts(blob, &nodes[0], 1);
+	fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
 #endif
 	return 0;
 
