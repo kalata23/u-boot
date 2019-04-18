@@ -48,7 +48,7 @@
 		regulator-name = "usb1-vbus";
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
-		regulator-boot-on;
+		regulator-always-on;
 		enable-active-high;
 		gpio = <&pio 6 9 GPIO_ACTIVE_HIGH>; /* PG9 */
 		status = "okay";
@@ -78,7 +78,7 @@
 };
 
 &hdmi {
-	hvcc-supply = <&reg_vcc_sys>;
+	hvcc-supply = <&reg_dldo1>;
 	status = "okay";
 };
 
@@ -210,6 +210,7 @@
 };
 
 &reg_dldo4 {
+	regulator-always-on;
 	regulator-min-microvolt = <3300000>;
 	regulator-max-microvolt = <3300000>;
 	regulator-name = "vcc-wifi-io";
@@ -221,9 +222,10 @@
 };
 
 &reg_eldo1 {
+	regulator-always-on;
 	regulator-min-microvolt = <1800000>;
 	regulator-max-microvolt = <1800000>;
-	regulator-name = "cpvdd";
+	regulator-name = "vcc-emmc";
 };
 
 &reg_eldo2 {
