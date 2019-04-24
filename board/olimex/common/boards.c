@@ -347,6 +347,7 @@ bool olimex_board_is_lime2()
 		case 9243:
 		case 9604:
 		case 9613:
+		case 9905:
 			return true;
 
 		default:
