@@ -328,7 +328,7 @@ U_BOOT_CMD(
 	"					FF:FF:FF:FF:FF:FF\n"
 	"					aabbccddeeff\n"
 #endif
-#if defined(CONFIG_VIDEO_LCD_OLINUXINO_PANEL)
+#if defined(CONFIG_VIDEO_LCD_OLINUXINO_PANEL) || defined(LCD_OLINUXINO)
 	"olinuxino monitor list		- Print supported video outputs\n"
 	"olinuxino monitor set		- Set specific LCD\n"
 #endif
