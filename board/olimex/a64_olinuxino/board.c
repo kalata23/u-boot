@@ -389,12 +389,21 @@ static void parse_spl_header(const uint32_t spl_addr)
  */
 static void setup_environment(const void *fdt)
 {
-	char serial_string[17] = { 0 };
 	char fdtfile[64];
+
+/**
+ * SID is somehow not unique. Skip ethernet address set
+ * and let u-boot gerenerate random one
+ */
+
+#if 0
+	char serial_string[17] = { 0 };
 	unsigned int sid[4];
 	uint8_t mac_addr[6];
 	char ethaddr[16];
 	int i, ret;
+
+
 
 	ret = sunxi_get_sid(sid);
 	if (ret == 0 && sid[0] != 0) {
@@ -435,6 +444,7 @@ static void setup_environment(const void *fdt)
 			env_set("serial#", serial_string);
 		}
 	}
+#endif
 
 	sprintf(fdtfile, "allwinner/%s", olimex_get_board_fdt());
 	env_set("fdtfile", fdtfile);
