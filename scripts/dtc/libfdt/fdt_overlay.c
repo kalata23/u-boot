@@ -776,7 +776,7 @@ static int overlay_symbol_update(void *fdt, void *fdto)
 			return -FDT_ERR_BADVALUE;
 
 		/* keep end marker to avoid strlen() */
-		e = path + path_len;
+		e = path + path_len - 1;
 
 		/* format: /<fragment-name>/__overlay__/<relative-subnode-path> */
 
