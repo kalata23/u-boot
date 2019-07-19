@@ -317,7 +317,10 @@ void spl_board_init(void)
 	mmc_initialize(NULL);
 	mmc = find_mmc_device(1);
 	if (!mmc_init(mmc)) {
-		eeprom->id = 8367;
+		if ((mmc->capacity >> 30) > 4)
+			eeprom->id = 9849;
+		else
+			eeprom->id = 8367;
 		eeprom->config.storage = 'e';
 		return;
 	}

@@ -336,11 +336,12 @@ uint32_t sunxi_spi_is_present(void)
 
 	spi0_deinit();
 
-	/* If data is not null, there is some JEDEC chip */
-	if (jedec_id[0] || jedec_id[1] || jedec_id[2])
-		return 1;
+	/* If all bytes are 0x00 or 0xFF there is no flash */
+	if ((jedec_id[0] == 0x00 && jedec_id[1] == 0x00 && jedec_id[2] == 0x00) ||
+	    (jedec_id[0] == 0xFF && jedec_id[1] == 0xFF && jedec_id[2] == 0xFF))
+		return 0;
 
-	return 0;
+	return 1;
 }
 
 /* Use priorty 0 to override the default if it happens to be linked in */

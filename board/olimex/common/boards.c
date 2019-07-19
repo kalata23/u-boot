@@ -244,6 +244,10 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(8857, "A64-OLinuXino-1G", "sun50i-a64-olinuxino-1G.dtb")
 		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), COM)
 	},
+	{
+		OLINUXINO_BOARD(9849, "A64-OLinuXino-1Ge16GW", "sun50i-a64-olinuxino-1Ge16GW.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(2), COM)
+	},
 #endif
 	/* END */
 	{
