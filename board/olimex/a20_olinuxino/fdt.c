@@ -262,9 +262,13 @@ static int board_fix_nand(void *blob)
 	 * fdt print /soc@01c00000/nand@01c03000
 	 */
 
-	offset = fdt_path_offset(blob, "/soc/nand@1c03000");
- 	if (offset < 0)
- 		return offset;
+	/* TODO: Make this universal */
+	if (!(gd->flags & GD_FLG_RELOC))
+		offset = fdt_path_offset(blob, "/soc/nand@1c03000");
+	else
+		offset = fdt_path_offset(blob, "/soc/nand-controller@1c03000");
+	if (offset < 0)
+		return offset;
 
 	/* Change status to okay */
 	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
