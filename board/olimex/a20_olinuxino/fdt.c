@@ -730,12 +730,12 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	int ret = 0;
 
 	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
- 	if (offset < 0)
- 		return offset;
+	if (offset < 0)
+		return offset;
 
 	pinctrl_phandle = fdt_get_phandle(blob, offset);
 	if (pinctrl_phandle < 0)
- 		return offset;
+		return pinctrl_phandle;
 
 	/**
 	 * &pwm {
@@ -745,17 +745,26 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 * };
 	 */
 
-	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/pwm0-pin");
- 	if (offset < 0)
- 		return offset;
+	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
+	if (offset < 0)
+		return offset;
 
- 	pins_phandle = fdt_create_phandle(blob, offset);
- 	if (!pins_phandle)
- 		return -1;
+	offset = fdt_add_subnode(blob, offset, "pwm0-pin");
+	if (offset < 0)
+		return offset;
+
+	pins_phandle = fdt_create_phandle(blob, offset);
+	if (!pins_phandle)
+		return -1;
+
+	ret = fdt_setprop_string(blob, offset, "function" , "pwm");
+	ret |= fdt_setprop_string(blob, offset, "pins" , "PB2");
+	if (ret < 0)
+		return ret;
 
 	offset = fdt_path_offset(blob, "/soc/pwm@1c20e00");
-  	if (offset < 0)
-  		return offset;
+	if (offset < 0)
+		return offset;
 
 	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", pins_phandle);
@@ -778,8 +787,8 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 */
 
 	offset = fdt_path_offset(blob, "/");
- 	if (offset < 0)
- 		return offset;
+	if (offset < 0)
+		return offset;
 
 	offset = fdt_add_subnode(blob, offset, "backlight");
 	if (offset < 0)
@@ -815,10 +824,9 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 * };
 	 */
 
-
 	offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800");
- 	if (offset < 0)
- 		return offset;
+	if (offset < 0)
+		return offset;
 
 	offset = fdt_add_subnode(blob, offset, "lcd0_rgb888_pins");
 	if (offset < 0)
@@ -828,11 +836,11 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	if (!pins_phandle)
 		return -1;
 
- 	ret = fdt_setprop_string(blob, offset, "function" , "lcd0");
+	ret = fdt_setprop_string(blob, offset, "function" , "lcd0");
 
- 	ret |= fdt_setprop_string(blob, offset, "pins" , "PD0");
- 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD1");
- 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD2");
+	ret |= fdt_setprop_string(blob, offset, "pins" , "PD0");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD1");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD2");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD3");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD4");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD5");
@@ -858,8 +866,8 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD25");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD26");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD27");
- 	if (ret < 0)
- 		return ret;
+	if (ret < 0)
+		return ret;
 
 	/**
 	 * panel@50 {
@@ -895,8 +903,8 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 
 	if (!lcd) {
 		offset = fdt_path_offset(blob, "/soc/i2c@1c2b400");
-	  	if (offset < 0)
-	  		return offset;
+		if (offset < 0)
+			return offset;
 
 		offset = fdt_add_subnode(blob, offset, "panel@50");
 		if (offset < 0)
@@ -928,7 +936,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_setprop(blob, offset, "enable-gpios", gpios, sizeof(gpios));
 	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
 	if (ret < 0)
- 		return ret;
+		return ret;
 
 	offset = fdt_add_subnode(blob, offset, "port@0");
 	if (offset < 0)
@@ -938,7 +946,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	if (ret < 0)
- 		return ret;
+		return ret;
 
 	offset = fdt_add_subnode(blob, offset, "endpoint@0");
 	if (offset < 0)
@@ -948,7 +956,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	if (ret < 0)
- 		return ret;
+		return ret;
 
 	panel_endpoint_phandle = fdt_create_phandle(blob, offset);
 	if (!panel_endpoint_phandle)
@@ -969,8 +977,8 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	*/
 
 	offset = fdt_path_offset(blob, "/soc/lcd-controller@1c0c000/ports/port@1");
-  	if (offset < 0)
-  		return offset;
+	if (offset < 0)
+		return offset;
 
 	offset = fdt_add_subnode(blob, offset, "endpoint@0");
 	if (offset < 0)
@@ -992,7 +1000,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 			ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
 	}
 	if (ret < 0)
- 		return ret;
+		return ret;
 
 	tcon0_endpoint_phandle  = fdt_create_phandle(blob, offset);
 	if (!tcon0_endpoint_phandle)
@@ -1008,7 +1016,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 
 	ret = fdt_setprop_u32(blob, offset, "remote-endpoint", tcon0_endpoint_phandle);
 	if (ret < 0)
- 		return ret;
+		return ret;
 
 	/* Enable TS */
 	if ((!lcd && (lcd_olinuxino_eeprom.id == 9278 ||	/* LCD-OLinuXino-7CTS */
