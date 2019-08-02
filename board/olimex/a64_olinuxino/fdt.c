@@ -220,8 +220,10 @@ static int __maybe_unused board_fix_lcd_olinuxino_rgb(void *blob)
 		 */
 
 		if (!lcd) {
-
-			offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/i2c0_pins");
+			if (!(gd->flags & GD_FLG_RELOC))
+				offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/i2c0_pins");
+			else
+				offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/i2c0-pins");
 			if (offset < 0)
 				return offset;
 
@@ -418,7 +420,10 @@ static int __maybe_unused board_fix_lcd_olinuxino_ts(void *blob)
 		return offset;
 
 	if (!fdtdec_get_is_enabled(blob, offset)) {
-		offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/i2c0_pins");
+		if (!(gd->flags & GD_FLG_RELOC))
+			offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/i2c0_pins");
+		else
+			offset = fdt_path_offset(blob, "/soc/pinctrl@1c20800/i2c0-pins");
 		if (offset < 0)
 			return offset;
 
@@ -495,7 +500,7 @@ static int __maybe_unused board_fix_lcd_olinuxino_ts(void *blob)
 		return ret;
 
 	if (id == 9278)
-		ret |= fdt_setprop_empty(blob, offset, "touchscreen-swapped-x-y");
+		ret = fdt_setprop_empty(blob, offset, "touchscreen-swapped-x-y");
 
 	return ret;
 }
