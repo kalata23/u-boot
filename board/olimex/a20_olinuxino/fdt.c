@@ -400,6 +400,11 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	if (offset < 0)
 		return offset;
 
+	ret = fdt_setprop_string(blob, offset, "function" , "pwm");
+	ret |= fdt_setprop_string(blob, offset, "pins" , "PB2");
+	if (ret < 0)
+		return ret;
+
 	pins_phandle[0] = fdt_create_phandle(blob, offset);
 	if (!pins_phandle[0])
 		return -1;
@@ -756,14 +761,14 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	if (offset < 0)
 		return offset;
 
-	pins_phandle = fdt_create_phandle(blob, offset);
-	if (!pins_phandle)
-		return -1;
-
 	ret = fdt_setprop_string(blob, offset, "function" , "pwm");
 	ret |= fdt_setprop_string(blob, offset, "pins" , "PB2");
 	if (ret < 0)
 		return ret;
+
+	pins_phandle = fdt_create_phandle(blob, offset);
+	if (!pins_phandle)
+		return -1;
 
 	offset = fdt_path_offset(blob, "/soc/pwm@1c20e00");
 	if (offset < 0)
