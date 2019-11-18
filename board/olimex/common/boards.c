@@ -226,6 +226,12 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(8958, "A20-SOM204-1Gs16Me16G-MC", "sun7i-a20-olimex-som204-evb-emmc.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(1), COM)
 	},
+
+	/* T2-SOM204 */
+	{
+		OLINUXINO_BOARD(10157, "T2-SOM204-1Gs16Me4G-C-I", "sun7i-a20-olimex-som204-evb-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(4), GBYTES(1), IND)
+	},
 #endif
 #if CONFIG_TARGET_A64_OLINUXINO
 	{
@@ -383,6 +389,7 @@ bool olimex_board_is_som204_evb()
 	switch (eeprom->id) {
 		case 8991:
 		case 8958:
+		case 10157:
 			return true;
 
 		default:
@@ -398,6 +405,7 @@ bool olimex_board_has_spi(void)
 	/* Some boards have both eMMC and SPI */
 	switch (eeprom->id) {
 		case 8958:		// A20-SOM204-1Gs16Me16G-MC
+		case 10157:		// T2-SOM204-1Gs16Me4G-C-I
 
 		case 9604:		// A20-OLinuXino-LIME2-e16Gs16M
 		case 9613:		// A20-OLinuXino-LIME2-e4Gs16M"
