@@ -56,9 +56,10 @@ static int board_fix_atecc508a(void *blob)
 	/**
 	 * Enabled on:
 	 *   - A20-SOM204-1Gs16Me16G-MC (8958)
-	 *   - A20-SOM204-1Gs16Me4G-C-I (10157)
+	 *   - T2-SOM204-1Gs16Me4G-C-I (10157)
+	 *   - T2-SOM204-1Gs16Me8G-MC-I (10234)
 	 */
-	if (eeprom->id != 8958 && eeprom->id != 10157)
+	if (eeprom->id != 8958 && eeprom->id != 10157 && eeprom->id != 10234)
 		return 0;
 
 	/**
