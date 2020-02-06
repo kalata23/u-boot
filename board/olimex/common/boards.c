@@ -226,6 +226,10 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(8958, "A20-SOM204-1Gs16Me16G-MC", "sun7i-a20-olimex-som204-evb-emmc.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(1), COM)
 	},
+	{
+		OLINUXINO_BOARD(10257, "A20-SOM204-1G-M", "sun7i-a20-olimex-som204-evb.dtb")
+		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), COM)
+	},
 
 	/* T2-SOM204 */
 	{
@@ -395,6 +399,7 @@ bool olimex_board_is_som204_evb()
 		case 8958:
 		case 10157:
 		case 10234:
+		case 10257:
 			return true;
 
 		default:
