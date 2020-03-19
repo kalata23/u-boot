@@ -242,7 +242,7 @@ struct olinuxino_boards olinuxino_boards[] = {
 	},
 	{
 		OLINUXINO_BOARD(10238, "T2-SOM204-1G-I", "sun7i-a20-olimex-som204-evb.dtb")
-		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), COM)
+		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), IND)
 	},
 #endif
 #if CONFIG_TARGET_A64_OLINUXINO
