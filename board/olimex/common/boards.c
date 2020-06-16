@@ -56,6 +56,11 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_CONFIG(EMMC, GBYTES(4), MBYTES(512), IND)
 
 	},
+	{
+		OLINUXINO_BOARD(10481, "T2-OLinuXino-LIME-e8Gs16M-IND", "sun7i-a20-olinuxino-lime-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(8), MBYTES(512), IND)
+
+	},
 
 	/* A20-OLinuXino-Lime2 */
 	{
@@ -95,6 +100,11 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), COM)
 	},
 
+	/* Shields & etc */
+	{
+		OLINUXINO_BOARD(10242, "A20-OLinuXino-LIME2-Shield", "sun7i-a20-olinuxino-lime2-shield.dtb")
+		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), COM)
+	}
 
 	/* T2-OLinuXino-Lime2 */
 	{
@@ -404,6 +414,7 @@ bool olimex_board_is_som204_evb()
 		case 10157:
 		case 10234:
 		case 10257:
+		case 10238:
 			return true;
 
 		default:
